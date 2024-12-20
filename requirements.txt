@@ -4,3 +4,4 @@ yfinance
 numpy_financial
 plotly
 tabulate
+seaborn
