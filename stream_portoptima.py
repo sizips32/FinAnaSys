@@ -6,8 +6,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from pypfopt import (
     EfficientFrontier, risk_models, expected_returns,
     BlackLittermanModel, HRPOpt
@@ -36,7 +34,8 @@ st.sidebar.write("각 자산의 기대 수익률 조정은 해당 자산의 미�
 individual_outlook = {}
 for ticker in tickers.split(","):
     individual_outlook[ticker.strip()] = st.sidebar.number_input(
-        f"Expected return adjustment for {ticker.strip()} (e.g., 1.1 for +10%, 0.9 for -10%)",
+        f"Expected return adjustment for {ticker.strip()} "
+        "(e.g., 1.1 for +10%, 0.9 for -10%)",
         value=1.0
     )
 
@@ -109,7 +108,10 @@ if st.button("Fetch Data and Optimize"):
 
                 # Check if mu is valid
                 if mu is not None and not mu.empty:
-                    viewdict = {ticker: mu[ticker] * individual_outlook[ticker] for ticker in tickers_list}
+                    viewdict = {
+                        ticker: mu[ticker] * individual_outlook[ticker]
+                        for ticker in tickers_list
+                    }
 
                     bl = BlackLittermanModel(S, pi=mu, absolute_views=viewdict)
                     bl_returns = bl.bl_returns()
@@ -118,7 +120,10 @@ if st.button("Fetch Data and Optimize"):
                     cleaned_weights = ef.clean_weights()
                     results["Black-Litterman"] = cleaned_weights
                 else:
-                    st.error("Expected returns (mu) could not be calculated. Please check the input data.")
+                    st.error(
+                        "Expected returns (mu) could not be calculated. "
+                        "Please check the input data."
+                    )
 
             # Visualize results
             for method, weights in results.items():
@@ -146,7 +151,8 @@ if st.button("Fetch Data and Optimize"):
                 for method, weights in results.items():
                     # Method 이름을 검정색 볼드체로 표시하고 밑줄 추가
                     st.markdown(
-                        f"<span style='color:black; font-size:24px; font-weight:bold; text-decoration: underline;'>{method} Asset Allocation:</span>",
+                        f"<span style='color:black; font-size:24px; font-weight:bold; "
+                        "text-decoration: underline;'>{method} Asset Allocation:</span>",
                         unsafe_allow_html=True
                     )
 
