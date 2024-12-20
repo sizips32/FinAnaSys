@@ -3,3 +3,4 @@ matplotlib
 yfinance
 numpy_financial
 plotly
+tabulate
