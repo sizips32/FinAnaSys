@@ -1,6 +1,6 @@
 streamlit
 matplotlib
-yfinance
+yfinance==0.2.28
 numpy_financial
 plotly
 tabulate
