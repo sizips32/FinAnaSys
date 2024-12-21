@@ -37,23 +37,14 @@ class DivAnalysis():
             if dividends_data.empty:
                 raise ValueError(f"{self.ticker}에 대한 배당 데이터가 없습니다.")
             
-            # 만약 csv 파일로 가져온다면 
-            # 데이터를 다운받은 후 파일 이름을 {ticker}.KS.csv 형식으로 변경해줘야함
-            if self.data_feed:
-                # 절대 경로로 변환하여 사용
-                file_path = os.path.abspath(f'data/{self.ticker}.csv')
-                dividends_data = pd.read_csv(file_path, parse_dates=True, index_col=0)
-                # 열 이름 바꾸기(만약 다른 포멧의 CSV 파일을 가져온다면 그거에 맞춰 배당이 기록된 열 이름을 바꿔줘야함)
-                dividends_data = dividends_data.rename(columns={'Amount': 'Dividends'})
-                dividends_data = dividends_data[['Dividends']]
-                # 데이터가 오름차순으로 정렬되어있는지 확인 후 안돼있으면 오름차순으로 바꿔주기
-                is_sorted = dividends_data.index.is_monotonic_increasing
-                if not is_sorted:
-                    dividends_data = dividends_data.sort_index()
-            
+            # 주가 데이터 가져오기
             price_data = yf.download(self.ticker, start=dividends_data.index[0])
+            
+            # 인덱스 레벨 확인 후 처리
             if isinstance(price_data.columns, pd.MultiIndex):
                 price_data = price_data.droplevel(level=1, axis=1)
+            elif price_data.columns.nlevels > 1:
+                raise ValueError("Unexpected MultiIndex structure in price_data.")
             
             # Add year columns
             dividends_data['year'] = dividends_data.index.year
