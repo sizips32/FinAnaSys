@@ -5,4 +5,4 @@ numpy_financial
 plotly
 tabulate
 seaborn
-pypfopt
+PyPortfolioOpt==1.5.5
