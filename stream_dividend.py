@@ -52,7 +52,9 @@ class DivAnalysis():
                     dividends_data = dividends_data.sort_index()
             
             price_data = yf.download(self.ticker, start=dividends_data.index[0])
-            price_data = price_data.droplevel(level=1, axis=1)  # yfinance 0.2.48에서 주가 데이터 가져올 때 multiindex로 가져옴 
+            if isinstance(price_data.columns, pd.MultiIndex):
+                price_data = price_data.droplevel(level=1, axis=1)
+            
             # Add year columns
             dividends_data['year'] = dividends_data.index.year
             yearly_dividends_sum = dividends_data.groupby('year')['Dividends'].sum().reset_index(name='dividend sum').set_index('year')
@@ -320,7 +322,7 @@ class DivAnalysis():
         return metrics
     
     def display_streamlit_analysis(self):
-        """Streamlit 사이드바에 지표를 표시하고 메인 화면에 차트를 보여주는 메소��"""
+        """Streamlit 사이드바에 지표를 표시하고 메인 화면에 차트를 보여주는 메소드"""
         import streamlit as st
         
         # 로딩 상태 표시

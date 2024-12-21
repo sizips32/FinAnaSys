@@ -45,7 +45,7 @@ if st.button("Fetch Data and Optimize"):
 
     try:
         data = yf.download(tickers_list, start=start_date,
-                           end=end_date)['Adj Close']
+                           end=end_date)['Close']
         if data.empty:
             st.error("데이터를 가져오는 데 실패했습니다. 입력한 티커를 확인하세요.")
         else:
