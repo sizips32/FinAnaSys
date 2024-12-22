@@ -8,3 +8,4 @@ seaborn
 PyPortfolioOpt==1.5.5
 ollama
 kaleido
+ollama
