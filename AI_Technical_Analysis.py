@@ -11,6 +11,11 @@ import tempfile
 import base64
 import os
 
+try:
+    import streamlit as st
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("Streamlit is not installed. Install it using 'pip install streamlit'")
+
 # Set up Streamlit app
 st.set_page_config(layout="wide")
 st.title("AI-Powered Technical Stock Analysis Dashboard")
@@ -19,12 +24,28 @@ st.sidebar.header("Configuration")
 # Input for stock ticker and date range
 ticker = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL):", "AAPL")
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2023-01-01"))
-end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-14"))
+end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-21"))
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
     st.session_state["stock_data"] = yf.download(ticker, start=start_date, end=end_date)
+    ticker_info = yf.Ticker(ticker)
+    st.session_state["financials"] = ticker_info.info
     st.success("Stock data loaded successfully!")
+
+# Display financials in sidebar
+if "financials" in st.session_state:
+    financials = st.session_state["financials"]
+    st.sidebar.subheader("Financial Information")
+    st.sidebar.write(f"**Sector:** {financials.get('sector', 'N/A')}")
+    st.sidebar.write(f"**Industry:** {financials.get('industry', 'N/A')}")
+    st.sidebar.write(f"**Market Cap:** {financials.get('marketCap', 'N/A'):,}")
+    st.sidebar.write(f"**PE Ratio:** {financials.get('trailingPE', 'N/A')}")
+    st.sidebar.write(f"**PS Ratio:** {financials.get('priceToSalesTrailing12Months', 'N/A')}")
+    st.sidebar.write(f"**PB Ratio:** {financials.get('priceToBook', 'N/A')}")
+    st.sidebar.write(f"**Dividend Yield:** {financials.get('dividendYield', 'N/A')}")
+    st.sidebar.write(f"**52 Week High:** {financials.get('fiftyTwoWeekHigh', 'N/A')}")
+    st.sidebar.write(f"**52 Week Low:** {financials.get('fiftyTwoWeekLow', 'N/A')}")
 
 # Check if data is available
 if "stock_data" in st.session_state:
@@ -38,7 +59,7 @@ if "stock_data" in st.session_state:
             high=data['High'],
             low=data['Low'],
             close=data['Close'],
-            name="Candlestick"  # Replace "trace 0" with "Candlestick"
+            name="Candlestick"
         )
     ])
 
@@ -92,10 +113,11 @@ if "stock_data" in st.session_state:
             # Prepare AI analysis request
             messages = [{
                 'role': 'user',
-                'content': """You are a Stock Trader specializing in Technical Analysis at a top financial institution.
-                            Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
-                            Base your recommendation only on the candlestick chart and the displayed technical indicators.
-                            First, provide the recommendation, then, provide your detailed reasoning.
+                'content': """
+                    You are a Stock Trader specializing in Technical Analysis at a top financial institution.
+                    Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
+                    Base your recommendation only on the candlestick chart and the displayed technical indicators.
+                    First, provide the recommendation, then, provide your detailed reasoning.
                 """,
                 'images': [image_data]
             }]
@@ -107,7 +129,3 @@ if "stock_data" in st.session_state:
 
             # Clean up temporary file
             os.remove(tmpfile_path)
-
-
-
-            
