@@ -11,3 +11,4 @@ kaleido
 ollama
 wordcloud
 PyPDF2
+markdown
