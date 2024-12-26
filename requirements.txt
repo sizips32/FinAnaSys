@@ -13,3 +13,5 @@ wordcloud
 PyPDF2
 markdown
 nltk
+arc
+
