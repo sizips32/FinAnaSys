@@ -3,191 +3,254 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 import datetime as dt
 from arch import arch_model
-from scipy import stats
-from sklearn.mixture import GaussianMixture
+import matplotlib.font_manager as fm
 
-# 한글 폰트 설정 (필요시 주석 처리 가능)
-# font_path = '/usr/share/fonts/truetype/nanum/NanumGothic.ttf'  # 시스템에 맞는 한글 폰트 경로
-# font_prop = fm.FontProperties(fname=font_path, size=12)
-# plt.rc('font', family=font_prop.get_name())
+# 한글 폰트 설정
+font_path = './NanumGothic.ttf'  # 시스템에 설치된 한글 폰트 경로
+font_prop = fm.FontProperties(fname=font_path, size=12)
+plt.rc('font', family=font_prop.get_name())  # 기본 폰트 설정
+plt.rcParams['axes.unicode_minus'] = False  # 음수 기호 표시
 
 # Title
-st.title('Volatility-Based Investment Strategy Simulation')
+st.title('변동성 기반 투자 전략 시뮬레이션')
 
 # Sidebar Inputs
-st.sidebar.header('Settings')
+st.sidebar.header('설정 옵션')
 
 # 설명 추가
-st.sidebar.markdown("### Parameter Descriptions")
-st.sidebar.markdown("- **Stock Ticker**: The code of the stock or ETF to analyze (SPY, QQQ, etc).")
-st.sidebar.markdown("- **Start/End Date**: Set the analysis period.")
-st.sidebar.markdown("- **Hedge Ratio**: The proportion of the portfolio invested in the hedge asset.")
-st.sidebar.markdown("- **Volatility Threshold**: The volatility threshold based on VIX to trigger additional hedge.")
+st.sidebar.markdown("### 파라미터 설명")
+st.sidebar.markdown("- **주식 티커**: 분석할 주식 또는 ETF 코드(SPY, QQQ 등).")
+st.sidebar.markdown("- **시작/종료 날짜**: 분석 기간 설정.")
+st.sidebar.markdown("- **헤지 비율**: 포트폴리오에서 변동성 헤지 자산의 비율.")
+st.sidebar.markdown("- **변동성 임계값**: VIX 기반으로 추가 헤지를 실행할 변동성 기준치.")
 
 # 입력 파라미터
-ticker = st.sidebar.text_input('Stock Ticker Input', value='SPY')
-start_date = st.sidebar.date_input('Start Date', dt.date(2015, 1, 1))
-end_date = st.sidebar.date_input('End Date', dt.date.today())
-hedge_ratio = st.sidebar.slider('Hedge Ratio (%)', 5, 20, 10)
-volatility_threshold = st.sidebar.slider('Volatility Threshold (VIX Basis)', 10, 50, 20)
-initial_cash = st.sidebar.number_input('Initial Cash Input', value=10000)
+ticker = st.sidebar.text_input('주식 티커 입력', value='SPY')
+start_date = st.sidebar.date_input('시작 날짜', dt.date(2015, 1, 1))
+end_date = st.sidebar.date_input('종료 날짜', dt.date.today())
+hedge_ratio = st.sidebar.slider('헤지 비율 (%)', 5, 20, 10)
+volatility_threshold = st.sidebar.slider('변동성 임계값 (VIX 기준)', 10, 50, 20)
+
+# 사용자 입력을 통한 변동성 임계값 설정
+threshold = st.sidebar.number_input('변동성 임계값 입력', value=0.025, format="%.4f")  # 기본값 0.025
+
+# 사용자 입력을 통한 무위험 수익률 설정
+risk_free_rate = st.sidebar.number_input('무위험 수익률 입력 (예: 0.025)', value=0.025, format="%.4f")  # 기본값 0.025
 
 # 실행 버튼
-execute = st.sidebar.button("Run Simulation")
+execute = st.sidebar.button("시뮬레이션 실행")
 
-if execute:
-    # 데이터 가져오기 및 수익률 계산
+initial_cash = 100000  # 초기 현금 정의
+
+def fetch_data(ticker, start_date, end_date):
+    """주식 데이터를 다운로드하고 수익률을 계산합니다."""
     data = yf.download(ticker, start=start_date, end=end_date)
     data['Returns'] = data['Adj Close'].pct_change().dropna()
+    return data
 
-    # NaN 값 제거
-    data = data.dropna(subset=['Returns'])
+def calculate_volatility(data):
+    """GARCH 모델을 사용하여 변동성을 계산합니다."""
+    model = arch_model(data['Returns'].dropna(), vol='Garch', p=1, q=1)
+    results = model.fit(disp='off')
+    data['Volatility'] = np.sqrt(results.conditional_volatility)
+    return data
 
-    # 변동성 계산 (수익률의 20일 이동 평균 표준편차)
-    data['Volatility'] = data['Returns'].rolling(window=20).std()
-    data = data.dropna(subset=['Volatility'])
+def bayesian_analysis(data, prior_mean=0.02, prior_variance=0.01):
+    """베이지안 변동성 분석을 수행하고 사후 평균과 분산을 계산합니다."""
+    likelihood_variance = np.var(data['Returns'].dropna())
+    posterior_mean = (prior_mean / prior_variance + np.mean(data['Returns']) / likelihood_variance) / (1 / prior_variance + 1 / likelihood_variance)
+    posterior_variance = 1 / (1 / prior_variance + 1 / likelihood_variance)
+    return posterior_mean, posterior_variance
 
-    # 변동성 그래프 시각화
-    st.subheader('Volatility Graph')
-    fig_volatility, ax_volatility = plt.subplots(figsize=(10, 6))
-    ax_volatility.plot(data['Volatility'], label='20-Day Moving Average Volatility', color='orange')
-    ax_volatility.axhline(y=volatility_threshold/100, color='red', linestyle='--', label='Volatility Threshold')
-    ax_volatility.set_title('Volatility Graph')
-    ax_volatility.set_xlabel('Date')
-    ax_volatility.set_ylabel('Volatility')
-    ax_volatility.legend()
-    st.pyplot(fig_volatility)
-
-    # 일간 누적 수익률 계산
-    data['Cumulative Returns'] = (1 + data['Returns']).cumprod() - 1
-
-    # 일간 누적 수익률 그래프 시각화
-    st.subheader('Cumulative Returns Graph')
-    fig_cumulative_returns, ax_cumulative_returns = plt.subplots(figsize=(10, 6))
-    ax_cumulative_returns.plot(data['Cumulative Returns'], label='Cumulative Returns', color='blue')
-    ax_cumulative_returns.set_title('Cumulative Returns Graph')
-    ax_cumulative_returns.set_xlabel('Date')
-    ax_cumulative_returns.set_ylabel('Cumulative Returns')
-    ax_cumulative_returns.legend()
-    st.pyplot(fig_cumulative_returns)
-
-    # 베이지안 변동성 추정
-    def estimate_volatility_distribution(returns, n_components=2):
-        gmm = GaussianMixture(n_components=n_components)
-        gmm.fit(returns.reshape(-1, 1))
-        return gmm
-    
-    # 몬테카를로 시뮬레이션
-    def monte_carlo_simulation(returns, vol_model, n_sims=1000, horizon=30):
-        simulations = []
-        for _ in range(n_sims):
-            sample = np.random.choice(returns, size=horizon)
-            vol_pred = vol_model.predict(sample.reshape(-1, 1))
-            sim_returns = sample * np.sqrt(vol_pred)
-            simulations.append(np.cumprod(1 + sim_returns))
-        return np.array(simulations)
-    
-    # 변동성 분포 추정
-    if len(data['Returns'].dropna()) > 1:
-        vol_dist = estimate_volatility_distribution(data['Returns'].values)
+def generate_investment_signal(posterior_mean, threshold=0.025):
+    """투자 신호를 생성합니다."""
+    if posterior_mean > threshold:
+        return "💡 **투자 신호: 사후 평균이 임계값을 초과했습니다. 투자 고려하세요!**"
     else:
-        st.error("Not enough data to estimate volatility distribution.")
-    
-    # 신뢰구간 계산
-    def calculate_confidence_intervals(simulations, confidence_levels=[0.05, 0.95]):
-        return np.percentile(simulations, [level * 100 for level in confidence_levels], axis=0)
-    
-    # 시뮬레이션 실행
-    mc_sims = monte_carlo_simulation(data['Returns'].values, vol_dist)
-    confidence_intervals = calculate_confidence_intervals(mc_sims)
-    
-    # 베이지안 포트폴리오 최적화
-    def optimize_portfolio_weights(returns, volatility, confidence_level=0.95):
-        posterior_vol = stats.norm.ppf(confidence_level) * volatility
-        optimal_hedge = np.minimum(hedge_ratio/100 * (posterior_vol/(volatility_threshold/100)), 0.4)
-        return optimal_hedge
-    
-    # 동적 헤지 전략 시뮬레이션 업데이트
-    portfolio_values = []
-    current_hedge_ratio = hedge_ratio/100
-    
+        return "🔍 **관망 신호: 사후 평균이 임계값 이하입니다. 신중하게 접근하세요.**"
+
+def calculate_var(data, confidence_level=0.95):
+    """VaR (Value at Risk)를 계산합니다."""
+    var_value = np.percentile(data['Returns'].dropna(), (1 - confidence_level) * 100)
+    return var_value
+
+def simulate_hedging(data, hedge_ratio, initial_cash=100000):
+    """동적 헤지 전략을 시뮬레이션합니다."""
+    portfolio_value = initial_cash  # 초기 포트폴리오 가치 설정
+    cash = initial_cash * (1 - hedge_ratio / 100)  # 현금 설정
+    hedge = initial_cash * (hedge_ratio / 100)  # 헤지 자산 설정
+    portfolio = []
+
     for i in range(1, len(data)):
-        # 베이지안 최적화된 헤지 비율 계산
-        optimal_hedge = optimize_portfolio_weights(
-            data['Returns'].iloc[i],
-            data['Volatility'].iloc[i]
-        )
-        
-        # 포트폴리오 재조정
-        if data['Volatility'].iloc[i] > volatility_threshold/100:
-            current_hedge_ratio = min(current_hedge_ratio * 1.05, optimal_hedge)
+        if data['Volatility'].iloc[i] > volatility_threshold / 100:
+            hedge *= 1.05
+            cash -= (hedge * 0.05)
         else:
-            current_hedge_ratio = max(current_hedge_ratio * 0.95, hedge_ratio/100)
-            
-        portfolio_value = initial_cash * (1 + data['Returns'].iloc[i] * (1 - current_hedge_ratio))
-        portfolio_values.append(portfolio_value)
-    
-    # 결과 시각화
-    st.subheader('Portfolio Simulation Results')
-    fig, ax = plt.subplots(figsize=(12, 8))  # 그래프 크기 확대
-    ax.plot(portfolio_values, label='Portfolio Value')
-    ax.fill_between(range(len(confidence_intervals[0])),
-                    confidence_intervals[0],
-                    confidence_intervals[1],
-                    alpha=0.2,
-                    label='95% Confidence Interval')
-    ax.legend()
-    st.pyplot(fig)
-    
-    # 전략 성과 분석
-    st.subheader('Bayesian Strategy Analysis')
-    sharpe_ratio = np.mean(np.diff(portfolio_values)) / np.std(np.diff(portfolio_values)) * np.sqrt(252)
-    var_95 = np.percentile(np.diff(portfolio_values), 5)
-    
-    st.write(f"Sharpe Ratio: {sharpe_ratio:.2f}")
-    st.write(f"Value at Risk (95%): ${var_95:,.2f}")
-    
-    # 베이지안 전략 분석 결과 설명
-    st.write("""
-    **Sharpe Ratio** indicates the risk-adjusted return of the portfolio. 
-    A higher value means that the portfolio has achieved higher returns for the level of risk taken. 
-    Generally, a Sharpe Ratio above 1 is considered good performance.
+            hedge *= 0.95
+            cash += (hedge * 0.05)
 
-    **Value at Risk (VaR)** represents the maximum amount of loss that the portfolio could incur over a specified period. 
-    If the 95% VaR is $X, it means that there is a 95% probability that the loss will not exceed $X during that period.
-    """)
+        portfolio_value = cash + hedge
+        portfolio.append(portfolio_value)
 
-    # 에르고딕 가설 적용
-    expected_return = np.mean(data['Returns']) * 252  # 연간 기대 수익률
-    st.write(f"Expected Annual Return: {expected_return:.2%}")
+    data['Portfolio'] = [initial_cash] + portfolio
+    return data
 
-    # 투자 전략 제안
-    st.subheader('Investment Strategy Recommendation')
-    current_volatility = data['Volatility'].iloc[-1]
-    current_return = data['Cumulative Returns'].iloc[-1]
+if execute:
+    # 사용자 입력을 통한 사전 확률 설정
+    prior_mean = st.sidebar.number_input('사전 기대 수익률 입력', value=0.02, format="%.4f")  # 초기 기대 수익률
+    prior_variance = st.sidebar.number_input('사전 불확실성 입력', value=0.01, format="%.4f")  # 초기 불확실성
 
-    # 베이지안 전략 분석 결과에 따른 포트폴리오 비중 및 매수/매도/홀드 추천
-    if sharpe_ratio > 1 and current_volatility <= volatility_threshold / 100:
-        recommendation = "The portfolio is performing well. Consider increasing your position in this stock."
-        portfolio_weight = "20-30%"
-    elif sharpe_ratio > 1 and current_volatility > volatility_threshold / 100:
-        recommendation = "The portfolio is performing well, but volatility is high. Consider maintaining your position."
-        portfolio_weight = "15-20%"
-    elif sharpe_ratio <= 1 and current_volatility <= volatility_threshold / 100:
-        recommendation = "The portfolio is underperforming. Consider reducing your position in this stock."
-        portfolio_weight = "10-15%"
+    # 데이터 수집
+    data = fetch_data(ticker, start_date, end_date)
+
+    # 수익률 데이터가 비어 있는지 확인
+    if data['Returns'].isnull().all():
+        st.error("수익률 데이터가 없습니다. 다른 주식 티커를 입력해 주세요.")
     else:
-        recommendation = "The portfolio is underperforming and volatility is high. Consider selling this stock."
-        portfolio_weight = "5-10%"
+        # 변동성 계산
+        st.header('변동성 분석')
+        data = calculate_volatility(data)
 
-    st.write(f"Current Volatility: {current_volatility:.2%}")
-    st.write(f"Current Cumulative Return: {current_return:.2%}")
-    st.write(f"Recommended Portfolio Weight: {portfolio_weight}")
-    st.write(recommendation)
+        # 베이지안 변동성 분석
+        st.header('베이지안 변동성 분석')
+        posterior_mean, posterior_variance = bayesian_analysis(data, prior_mean, prior_variance)
 
-# Footer
+        st.write(f"사후 평균 (Posterior Mean): {posterior_mean:.4f}")
+        st.write(f"사후 분산 (Posterior Variance): {posterior_variance:.4f}")
+
+        # 투자 신호 생성
+        investment_signal = generate_investment_signal(posterior_mean, risk_free_rate)  # 사용자 입력으로 무위험 수익률 전달
+        st.write(investment_signal)
+
+        # 투자 설명 추가
+        if posterior_mean > risk_free_rate:
+            st.write("### 투자 설명")
+            st.write("사후 평균이 무위험 수익률을 초과했습니다. 이는 해당 ��식이 앞으로 긍정적인 수익을 낼 가능성이 높다는 것을 의미합니다. "
+                      "따라서, 이 주식에 투자하는 것이 좋습니다.")
+        else:
+            st.write("### 투자 설명")
+            st.write("사후 평균이 무위험 수익률 이하입니다. 이는 해당 주식의 수익률이 기대에 미치지 못할 가능성이 높다는 것을 의미합니다. "
+                      "따라서, 신중하게 접근하고 다른 투자 기회를 고려하는 것이 좋습니다.")
+
+        # VaR 계산
+        var_value = calculate_var(data)
+        st.write(f"VaR (신뢰 수준 95%): {var_value:.4f}")
+
+        # 변동성 시각화
+        st.subheader('변동성 시각화')
+        fig, ax = plt.subplots()
+        ax.plot(data.index, data['Volatility'], label='Volatility')
+        ax.axhline(volatility_threshold / 100, color='r', linestyle='--', label='Threshold')
+        ax.legend()
+        st.pyplot(fig)
+
+        # 동적 헤지 전략 시뮬레이션
+        st.header('헤지 전략 시뮬레이션')
+        data = simulate_hedging(data, hedge_ratio, initial_cash)
+
+        # 포트폴리오 성과 시각화
+        st.subheader('포트폴리오 가치 변화')
+        fig2, ax2 = plt.subplots()
+        ax2.plot(data.index, data['Portfolio'], label='포트폴리오 가치', color='blue')
+        ax2.set_title('포트폴리오 가치 변화', fontproperties=font_prop)
+        ax2.set_xlabel('날짜', fontproperties=font_prop)
+        ax2.set_ylabel('포트폴리오 가치 ($)', fontproperties=font_prop)
+        ax2.legend(prop=font_prop)
+        st.pyplot(fig2)
+
+        # 누적 수익률 계산
+        data['Cumulative Returns'] = (data['Returns'] + 1).cumprod() - 1
+
+        # 누적 수익률 시각화
+        st.subheader('누적 수익률')
+        fig3, ax3 = plt.subplots()
+        ax3.plot(data.index, data['Cumulative Returns'], label='누적 수익률', color='green')
+        ax3.set_title('누적 수익률', fontproperties=font_prop)
+        ax3.set_xlabel('날짜', fontproperties=font_prop)
+        ax3.set_ylabel('누적 수익률 (%)', fontproperties=font_prop)
+        ax3.legend(prop=font_prop)
+        st.pyplot(fig3)
+
+        # 성과 요약
+        st.subheader('성과 요약')
+        st.write(f"최종 포트폴리오 가치: ${data['Portfolio'].iloc[-1]:,.2f}")
+        st.write(f"수익률: {((data['Portfolio'].iloc[-1] / initial_cash - 1) * 100):.2f}%")
+
+        # 에르고딕 가설 분석 추가
+        st.header('에르고딕 가설 분석')
+
+        # 1. 누적 수익률 계산
+        cumulative_returns = (data['Returns'] + 1).cumprod() - 1  # 누적 수익률 계산
+        st.line_chart(cumulative_returns)  # 누적 수익률 시각화
+
+        # 2. 시간 평균 (Time Average) 계산
+        time_avg = np.mean(cumulative_returns)  # 누적 수익률의 평균
+        st.write(f"시간 평균 (Time Average): {time_avg:.4f}")
+
+        # 3. 집합 평균 (Ensemble Average) 계산
+        ensemble_avg = data['Returns'].mean() * len(data)  # 수익률의 평균에 데이터 포인트 수를 곱함
+        st.write(f"집합 평균 (Ensemble Average): {ensemble_avg:.4f}")
+
+        # 4. 에르고딕 성질 검증
+        difference = abs(time_avg - ensemble_avg)  # 시간 평균과 집합 평균의 차이 계산
+        st.write(f"시간 평균과 집합 평균의 차이: {difference:.4f}")
+
+        # 5. 에르고딕 성질의 성립 여�� 판단
+        if difference < 0.01:  # 차이가 0.01 이하일 경우
+            st.write("✅ 에르고딕 성질이 성립합니다. 장기적으로 전략이 안정적일 가능성이 높습니다.")
+        else:
+            st.write("❌ 에르고딕 성질이 성립하지 않습니다. 전략의 기 안정성을 재검토해야 합니다.")
+
+        # 전략 추천 섹션
+        st.write("### 전략 추천")
+        if data['Volatility'].iloc[-1] > volatility_threshold / 100:
+            st.write("🔥 **변동성이 높은 황입니다. 헤지 비중을 확대하고 단기 옵션을 고려하세요.**")
+        else:
+            st.write("📈 **변동성이 안정적입니다. 핵심 자산 비중을 유지하며 장기 성장 전략을 고려하세요.**")
+
+        # 결과 분석 설명
+        st.write("### 결과 분석")
+        st.write("이 전략은 변동성 임계값을 기반으로 동적 헤지를 수행하여 시장 급변 상황에 대비합니다.")
+
+        # 종합 결과 분석
+        st.header('종합 결과 분석')
+        final_portfolio_value = data['Portfolio'].iloc[-1] if 'Portfolio' in data.columns else initial_cash
+        st.write(f"최종 포트폴리오 가치: ${final_portfolio_value:,.2f}")
+        st.write(f"수익률: {((final_portfolio_value / initial_cash - 1) * 100):.2f}%")
+
+        # 투자 추천
+        st.subheader('투자 추천')
+
+        # 1. 사후 평균과 임계값 비교
+        if posterior_mean > risk_free_rate:  # 무위험 수익률과 비교
+            st.write("🔍 **사후 평균이 무위험 수익률을 초과했습니다.**")
+            
+            # 2. 포트폴리오 가치 평가
+            if final_portfolio_value > initial_cash:
+                st.write("📈 **추천: 매수!**")
+                st.write("변동성이 높고, 사후 평균이 무위험 수익률을 초과했습니다. "
+                         "이는 해당 주식이 긍정적인 수익을 낼 가능성이 높다는 것을 의미합니다.")
+            else:
+                st.write("🔄 **추천: 홀딩!**")
+                st.write("포트폴리오 가치가 초기 투자금보다 낮지만, 사후 평균이 무위험 수익률을 초과합니다. "
+                         "따라서, 추가적인 관찰이 필요합니다.")
+
+        # 3. 사후 평균과 임계값 비교 (하위 조건)
+        else:
+            st.write("🔍 **사후 평균이 무위험 수익률 이하입니다.**")
+            
+            # 4. 포트폴리오 가치 평가
+            if final_portfolio_value < initial_cash:
+                st.write("🔻 **추천: 매도!**")
+                st.write("변동성이 낮고, 사후 평균이 무위험 수익률 이하입니다. "
+                         "이는 해당 주식의 수익률이 기대에 미치지 못할 가능성이 높다는 것을 의미합니다.")
+            else:
+                st.write("🔄 **추천: 홀딩!**")
+                st.write("포트폴리오 가치가 초기 투자금보다 높지만, 사후 평균이 무위험 수익률 이하입니다. "
+                         "따라서, 신중하게 접근하고 다른 투자 기회를 고려하는 것이 좋습니다.")
+
+# Footer홀
 st.sidebar.markdown("---")
 st.sidebar.text("Created by Sean J. Kim")
