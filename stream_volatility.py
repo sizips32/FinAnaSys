@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide")
 
 # 한글 폰트 설정
-font_path = './NanumGothic.ttf'  # 시스템에 설치된 한글 폰트 경로
+font_path = './font/NanumGothic.ttf'  # 시스템에 설치된 한글 폰트 경로
 font_prop = fm.FontProperties(fname=font_path, size=12)
 plt.rc('font', family=font_prop.get_name())  # 기본 폰트 설정
 plt.rcParams['axes.unicode_minus'] = False  # 음수 기호 표시
