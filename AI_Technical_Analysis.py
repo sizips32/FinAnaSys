@@ -10,6 +10,9 @@ import ollama
 import tempfile
 import base64
 import os
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 
 try:
     import streamlit as st
@@ -18,7 +21,25 @@ except ModuleNotFoundError:
 
 # Set up Streamlit app
 st.set_page_config(layout="wide")
-st.title("AI-Powered Technical Stock Analysis Dashboard")
+st.title("AI 기반 기술적 분석 시스템")
+st.markdown("""
+### 분석 방법론
+이 시스템은 머신러닝을 활용한 고급 기술적 분석을 제공합니다.
+
+#### 주요 기능:
+1. **AI 기반 패턴 인식**
+   - 과거 차트 패턴 학습
+   - 미래 패턴 예측
+
+2. **기술적 지표 분석**
+   - RSI, MACD, 볼린저 밴드 등 계산
+   - 지표간 상관관계 분석
+
+3. **매매 신호**
+   - AI 기반 매수/매도 시점 제안
+   - 신뢰도 점수 제공
+""")
+
 st.sidebar.header("Configuration")
 
 # Input for stock ticker and date range
@@ -28,10 +49,20 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-21"))
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
-    st.session_state["stock_data"] = yf.download(ticker, start=start_date, end=end_date)
-    ticker_info = yf.Ticker(ticker)
-    st.session_state["financials"] = ticker_info.info
-    st.success("Stock data loaded successfully!")
+    try:
+        st.session_state["stock_data"] = yf.download(ticker, start=start_date, end=end_date)
+        if st.session_state["stock_data"].empty:
+            st.error(f"데이터를 찾을 수 없습니다: {ticker}")
+        else:
+            try:
+                ticker_info = yf.Ticker(ticker)
+                st.session_state["financials"] = ticker_info.info
+            except Exception as e:
+                st.warning(f"재무 정보를 가져오는데 실패했습니다: {str(e)}")
+                st.session_state["financials"] = {}
+            st.success("주가 데이터를 성공적으로 불러왔습니다!")
+    except Exception as e:
+        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {str(e)}")
 
 # Display financials in sidebar
 if "financials" in st.session_state:
@@ -39,7 +70,14 @@ if "financials" in st.session_state:
     st.sidebar.subheader("Financial Information")
     st.sidebar.write(f"**Sector:** {financials.get('sector', 'N/A')}")
     st.sidebar.write(f"**Industry:** {financials.get('industry', 'N/A')}")
-    st.sidebar.write(f"**Market Cap:** {financials.get('marketCap', 'N/A'):,}")
+    
+    # 시가총액 포맷팅 수정
+    market_cap = financials.get('marketCap', 'N/A')
+    if isinstance(market_cap, (int, float)):
+        st.sidebar.write(f"**Market Cap:** ${market_cap:,.2f}")
+    else:
+        st.sidebar.write(f"**Market Cap:** {market_cap}")
+    
     st.sidebar.write(f"**PE Ratio:** {financials.get('trailingPE', 'N/A')}")
     st.sidebar.write(f"**PS Ratio:** {financials.get('priceToSalesTrailing12Months', 'N/A')}")
     st.sidebar.write(f"**PB Ratio:** {financials.get('priceToBook', 'N/A')}")

@@ -6,6 +6,7 @@ from plotly import graph_objects as go
 from plotly.subplots import make_subplots
 from tabulate import tabulate
 import os
+import streamlit as st
 
 class DivAnalysis():
 
@@ -376,6 +377,42 @@ class DivAnalysis():
             st.plotly_chart(metrics['chart'], use_container_width=True)
         
         return metrics
+
+def run_dividend_analysis():
+    st.title('배당금 분석 대시보드')
+    
+    ticker = st.text_input('주식 티커 입력', '')
+    
+    if ticker:
+        try:
+            stock = yf.Ticker(ticker)
+            dividends = stock.dividends
+            
+            if dividends.empty:
+                st.warning("배당금 정보가 없습니다.")
+                return
+            
+            st.subheader("배당금 히스토리")
+            st.dataframe(dividends.tail(10))
+            
+            annual_dividend = dividends[-4:].sum()
+            current_price = stock.info['regularMarketPrice']
+            dividend_yield = (annual_dividend / current_price) * 100
+            
+            st.subheader("배당 정보")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("연간 배당금", f"${annual_dividend:.2f}")
+            with col2:
+                st.metric("배당률", f"{dividend_yield:.2f}%")
+            
+            st.line_chart(dividends)
+            
+        except Exception as e:
+            st.error(f"에러 발생: {str(e)}")
+
+if __name__ == '__main__':
+    run_dividend_analysis()
     
 if __name__ == "__main__":
     import streamlit as st

@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import datetime as dt
 from arch import arch_model
 import matplotlib.font_manager as fm
+import plotly.graph_objects as go
+
+st.set_page_config(layout="wide")
 
 # 한글 폰트 설정
 font_path = './NanumGothic.ttf'  # 시스템에 설치된 한글 폰트 경로
@@ -14,7 +17,24 @@ plt.rc('font', family=font_prop.get_name())  # 기본 폰트 설정
 plt.rcParams['axes.unicode_minus'] = False  # 음수 기호 표시
 
 # Title
-st.title('변동성 기반 투자 전략 시뮬레이션')
+st.title('주가 변동성 분석 시스템')
+st.markdown("""
+### 분석 개요
+이 시스템은 주식의 변동성과 리스크를 다각도로 분석합니다.
+
+#### 주요 지표:
+1. **베타 계수 분석**
+   - 시장 대비 변동성 측정
+   - 상관관계 분석
+
+2. **변동성 지표**
+   - 역사적 변동성 계산
+   - 내재 변동성 추정
+
+3. **리스크 평가**
+   - VaR (Value at Risk) 계산
+   - 최대 손실 예상치 제공
+""")
 
 # Sidebar Inputs
 st.sidebar.header('설정 옵션')
@@ -127,7 +147,7 @@ if execute:
         # 투자 설명 추가
         if posterior_mean > risk_free_rate:
             st.write("### 투자 설명")
-            st.write("사후 평균이 무위험 수익률을 초과했습니다. 이는 해당 ��식이 앞으로 긍정적인 수익을 낼 가능성이 높다는 것을 의미합니다. "
+            st.write("사후 평균이 무위험 수익률을 초과했습니다. 이는 해당 주식이 앞으로 긍정적인 수익을 낼 가능성이 높다는 것을 의미합니다. "
                       "따라서, 이 주식에 투자하는 것이 좋습니다.")
         else:
             st.write("### 투자 설명")
@@ -197,7 +217,7 @@ if execute:
         difference = abs(time_avg - ensemble_avg)  # 시간 평균과 집합 평균의 차이 계산
         st.write(f"시간 평균과 집합 평균의 차이: {difference:.4f}")
 
-        # 5. 에르고딕 성질의 성립 여�� 판단
+        # 5. 에르고딕 성질의 성립 여부 판단
         if difference < 0.01:  # 차이가 0.01 이하일 경우
             st.write("✅ 에르고딕 성질이 성립합니다. 장기적으로 전략이 안정적일 가능성이 높습니다.")
         else:
@@ -206,7 +226,7 @@ if execute:
         # 전략 추천 섹션
         st.write("### 전략 추천")
         if data['Volatility'].iloc[-1] > volatility_threshold / 100:
-            st.write("🔥 **변동성이 높은 황입니다. 헤지 비중을 확대하고 단기 옵션을 고려하세요.**")
+            st.write("🔥 **변동성이 높은 상황입니다. 헤지 비중을 확대하고 단기 옵션을 고려하세요.**")
         else:
             st.write("📈 **변동성이 안정적입니다. 핵심 자산 비중을 유지하며 장기 성장 전략을 고려하세요.**")
 
@@ -251,6 +271,6 @@ if execute:
                 st.write("포트폴리오 가치가 초기 투자금보다 높지만, 사후 평균이 무위험 수익률 이하입니다. "
                          "따라서, 신중하게 접근하고 다른 투자 기회를 고려하는 것이 좋습니다.")
 
-# Footer홀
+# Footer
 st.sidebar.markdown("---")
 st.sidebar.text("Created by Sean J. Kim")

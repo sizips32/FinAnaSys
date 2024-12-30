@@ -1,17 +1,21 @@
-streamlit
-matplotlib
-yfinance==0.2.40
+streamlit==1.29.0
+matplotlib==3.8.2
+yfinance==0.2.31  # 변경
 numpy_financial
-plotly
+plotly==5.18.0
 tabulate
 seaborn
 PyPortfolioOpt==1.5.5
-ollama
+ollama==0.1.6
 kaleido
-ollama
 wordcloud
 PyPDF2
 markdown
 nltk
-arch
+arch==6.2.0
+pandas==2.1.3
+numpy==1.26.2
+scipy==1.11.4
+scikit-learn==1.3.2
+pydantic==2.5.2
 
