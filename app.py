@@ -38,7 +38,7 @@ else:
 
 def open_browser():
     """메인 페이지용 브라우저 오프너"""
-    webbrowser.open_new('http://localhost:5000')
+    webbrowser.open_new('http://localhost:5050')
 
 
 def open_analysis_page(type):

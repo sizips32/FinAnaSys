@@ -1,0 +1,12 @@
+{
+  "name": "finalsys",
+  "version": "1.0.0",
+  "description": "Financial Analysis System",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2"
+  }
+}
