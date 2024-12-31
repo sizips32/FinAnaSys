@@ -45,7 +45,7 @@ st.sidebar.header("Configuration")
 # Input for stock ticker and date range
 ticker = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL):", "AAPL")
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2023-01-01"))
-end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-21"))
+end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-31"))
 
 # Fetch stock data
 if st.sidebar.button("Fetch Data"):
