@@ -1,6 +1,6 @@
 streamlit>=1.28.0
 matplotlib>=3.7.0
-yfinance>=0.2.3
+yfinance>=0.2.4
 numpy_financial
 plotly>=5.18.0
 tabulate
