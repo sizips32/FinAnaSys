@@ -8,10 +8,28 @@ import pandas as pd
 import nltk
 from nltk import pos_tag
 from nltk.tokenize import word_tokenize
-from konlpy.tag import Okt
 import io
 import base64
 import os
+
+# konlpy import 예외 처리
+try:
+    from konlpy.tag import Okt
+    USE_KONLPY = True
+except ImportError:
+    st.warning("""
+    한글 형태소 분석을 위한 konlpy 패키지가 설치되지 않았습니다.
+    터미널에서 다음 명령어를 실행하세요:
+    
+    pip install konlpy
+    pip install JPype1
+    
+    만약 macOS나 Linux를 사용중이라면:
+    brew install java
+    또는
+    sudo apt-get install default-jdk python3-dev
+    """)
+    USE_KONLPY = False
 
 # NLTK 리소스 초기화
 @st.cache_resource
@@ -29,7 +47,7 @@ initialize_nltk()
 
 class TextAnalyzer:
     def __init__(self):
-        self.okt = Okt()
+        self.okt = Okt() if USE_KONLPY else None
         self.default_words = {
             '분석': 5, '결과': 4, '데이터': 3, '텍스트': 2, '단어': 1
         }
