@@ -109,11 +109,47 @@ if __name__ == '__main__':
             text = load_md(uploaded_file)
         elif uploaded_file.name.endswith(".pdf"):
             text = load_pdf(uploaded_file)
+        elif uploaded_file.name.endswith(".txt"):
+            text = load_text_file(uploaded_file)
 
         if text:
-            wordcloud = WordCloud(font_path='/Users/soonjaekim/Desktop/AGIs/나눔 글꼴/나눔명조/NanumFontSetup_OTF_MYUNGJO/NanumMyeongjo.otf', width=800, height=400, background_color='white').generate(text)
+            try:
+                # 폰트 경로 설정
+                font_paths = [
+                    './font/NanumGothic.ttf',
+                    '/usr/share/fonts/truetype/nanum/NanumGothic.ttf',
+                    '/System/Library/Fonts/AppleGothic.ttf',
+                    'C:/Windows/Fonts/malgun.ttf',
+                    '/Users/soonjaekim/Desktop/AGIs/나눔 글꼴/나눔명조/NanumFontSetup_OTF_MYUNGJO/NanumMyeongjo.otf'
+                ]
 
-            plt.figure(figsize=(10, 5))
-            plt.imshow(wordcloud, interpolation='bilinear')
-            plt.axis('off')
-            st.pyplot(plt)
+                # 사용 가능한 폰트 찾기
+                font_path = None
+                for path in font_paths:
+                    if os.path.exists(path):
+                        font_path = path
+                        break
+
+                if font_path is None:
+                    # 폰트를 찾지 못한 경우 기본 폰트 사용
+                    wordcloud = WordCloud(width=800, height=400, 
+                                       background_color='white').generate(text)
+                    st.warning("한글 폰트를 찾을 수 없어 기본 폰트를 사용합니다.")
+                else:
+                    wordcloud = WordCloud(
+                        font_path=font_path,
+                        width=800, 
+                        height=400,
+                        background_color='white'
+                    ).generate(text)
+
+                plt.figure(figsize=(10, 5))
+                plt.imshow(wordcloud, interpolation='bilinear')
+                plt.axis('off')
+                st.pyplot(plt)
+
+            except Exception as e:
+                st.error(f"워드 클라우드 생성 중 오류가 발생했습니다: {str(e)}")
+                # 디버깅을 위한 상세 오류 정보
+                st.error("상세 오류 정보:")
+                st.error(e)
