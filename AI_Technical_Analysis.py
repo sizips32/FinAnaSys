@@ -13,6 +13,56 @@ import os
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
+from datetime import datetime
+from importlib.metadata import version, PackageNotFoundError
+
+# 패키지 버전 검증 로직 수정
+def verify_package_versions():
+    required_versions = {
+        'yfinance': '0.2.40',
+        'pandas': '1.5.3',
+        'numpy': '1.24.0',
+        'streamlit': '1.24.0'
+    }
+    
+    missing_packages = []
+    version_mismatch = []
+    
+    for package, required_version in required_versions.items():
+        try:
+            installed_version = version(package)
+            if installed_version != required_version:
+                if package == 'yfinance':  # yfinance 특별 처리
+                    st.error(f"""
+                    yfinance 버전 불일치. 다음 명령어를 순서대로 실행하세요:
+                    1. pip uninstall yfinance
+                    2. pip cache purge
+                    3. pip install yfinance==0.2.40
+                    """)
+                version_mismatch.append(f"{package} (현재: {installed_version}, 필요: {required_version})")
+        except PackageNotFoundError:
+            missing_packages.append(package)
+    
+    if missing_packages or version_mismatch:
+        return False
+    return True
+
+# 메인 코드 시작 전에 버전 검증
+if not verify_package_versions():
+    st.stop()
+
+# yfinance 버전 확인 및 경고
+try:
+    import yfinance as yf
+    yf_version = yf.__version__
+    if yf_version != "0.2.40":
+        st.warning(f"""
+        현재 yfinance 버전 ({yf_version})이 권장 버전(0.2.40)과 다릅니다.
+        다음 명령어로 권장 버전을 설치하세요:
+        pip install yfinance==0.2.40
+        """)
+except:
+    st.error("yfinance 패키지를 설치해주세요: pip install yfinance==0.2.40")
 
 try:
     import streamlit as st
@@ -45,24 +95,56 @@ st.sidebar.header("Configuration")
 # Input for stock ticker and date range
 ticker = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL):", "AAPL")
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2023-01-01"))
-end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-21"))
+end_date = st.sidebar.date_input("End Date", value=datetime.now().date())  # 현재 날짜로 설정
 
-# Fetch stock data
+# Fetch stock data with error handling
 if st.sidebar.button("Fetch Data"):
     try:
-        st.session_state["stock_data"] = yf.download(ticker, start=start_date, end=end_date)
-        if st.session_state["stock_data"].empty:
-            st.error(f"데이터를 찾을 수 없습니다: {ticker}")
-        else:
+        with st.spinner("데이터를 가져오는 중..."):
             try:
-                ticker_info = yf.Ticker(ticker)
-                st.session_state["financials"] = ticker_info.info
+                # 데이터 다운로드 시도 (show_errors 파라미터 제거)
+                data = yf.download(ticker, 
+                                 start=start_date, 
+                                 end=end_date, 
+                                 progress=False)
+                
+                if data.empty:
+                    st.error(f"해당 기간에 데이터가 없습니다: {ticker}")
+                    st.stop()
+                
+                # 티커 정보 가져오기 전에 데이터 유효성 검증
+                if len(data) > 0:
+                    ticker_obj = yf.Ticker(ticker)
+                    try:
+                        info = ticker_obj.info
+                        if info and isinstance(info, dict):
+                            st.session_state["financials"] = info
+                        else:
+                            st.warning("기업 정보를 가져올 수 없습니다. 기본 차트만 제공됩니다.")
+                            st.session_state["financials"] = {}
+                    except Exception as e:
+                        st.warning(f"기업 정보 조회 중 오류 발생: {str(e)}. 기본 차트만 제공됩니다.")
+                        st.session_state["financials"] = {}
+
+                    # 세션 상태 업데이트
+                    st.session_state["stock_data"] = data
+                    
+                    if len(data) < 20:
+                        st.error("분석을 위해 최소 20일치의 데이터가 필요합니다.")
+                        st.stop()
+                    
+                    st.success(f"{ticker} 데이터를 성공적으로 불러왔습니다!")
+                else:
+                    st.error("데이터를 찾을 수 없습니다.")
+                    st.stop()
+                
             except Exception as e:
-                st.warning(f"재무 정보를 가져오는데 실패했습니다: {str(e)}")
-                st.session_state["financials"] = {}
-            st.success("주가 데이터를 성공적으로 불러왔습니다!")
+                st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {str(e)}")
+                st.stop()
+
     except Exception as e:
-        st.error(f"데이터를 가져오는 중 오류가 발생했습니다: {str(e)}")
+        st.error(f"예상치 못한 오류가 발생했습니다: {str(e)}")
+        st.stop()
 
 # Display financials in sidebar
 if "financials" in st.session_state:
@@ -137,6 +219,15 @@ if "stock_data" in st.session_state:
 
     # Analyze chart with LLaMA 3.2 Vision
     st.subheader("AI-Powered Analysis")
+
+    def prepare_analysis_prompt():
+        return """
+        You are a Stock Trader specializing in Technical Analysis at a top financial institution.
+        Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
+        Base your recommendation only on the candlestick chart and the displayed technical indicators.
+        First, provide the recommendation, then, provide your detailed reasoning.
+        """
+
     if st.button("Run AI Analysis"):
         with st.spinner("Analyzing the chart, please wait..."):
             # Save chart as a temporary image
@@ -151,12 +242,7 @@ if "stock_data" in st.session_state:
             # Prepare AI analysis request
             messages = [{
                 'role': 'user',
-                'content': """
-                    You are a Stock Trader specializing in Technical Analysis at a top financial institution.
-                    Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
-                    Base your recommendation only on the candlestick chart and the displayed technical indicators.
-                    First, provide the recommendation, then, provide your detailed reasoning.
-                """,
+                'content': prepare_analysis_prompt(),
                 'images': [image_data]
             }]
             response = ollama.chat(model='llama3.2-vision', messages=messages)
@@ -168,34 +254,32 @@ if "stock_data" in st.session_state:
             # Clean up temporary file
             os.remove(tmpfile_path)
 
-""" 
+# 가치 평가 지표 설명 수정
+VALUATION_METRICS_DOC = """
 가치 평가 지표는 기업의 주식이 현재 가격에 비해 과대평가 또는 과소평가되어 있는지를 판단하는 데 도움을 줍니다. 다음은 주요 가치 평가 지표와 그 의미입니다.
 
 1. 주가수익비율 (Price-to-Earnings Ratio, P/E Ratio)
-의미: 주가를 주당 순이익(EPS)으로 나눈 값으로, 주식이 현재 수익에 비해 얼마나 비싼지를 나타냅니다. 일반적으로 P/E 비율이 낮을수록 주식이 저평가되어 있다고 볼 수 있습니다.
-투자 적용: P/E 비율이 업종 평균보다 낮다면, 해당 주식이 저평가되어 있을 가능성이 있습니다. 반대로, P/E 비율이 높다면 과대평가된 것으로 볼 수 있습니다.
+의미: 주가를 주당 순이익(EPS)으로 나눈 값으로, 주식이 현재 수익에 비해 얼마나 비싼지를 나타냅니다.
 
 2. 주가순자산비율 (Price-to-Book Ratio, P/B Ratio)
-의미: 주가를 주당 순자산(BVPS)으로 나눈 값으로, 기업의 자산 가치에 비해 주가가 얼마나 비싼지를 나타냅니다. P/B 비율이 1보다 낮으면 자산 가치에 비해 주가가 저평가되어 있다고 볼 수 있습니다.
-투자 적용: P/B 비율이 낮은 기업은 자산 기반의 가치가 높아, 투자자에게 매력적일 수 있습니다. 반면, P/B 비율이 높으면 자산 가치에 비해 주가가 비쌀 수 있습니다.
+의미: 주가를 주당 순자산(BVPS)으로 나눈 값으로, 기업의 자산 가치에 비해 주가가 얼마나 비싼지를 나타냅니다.
 
 3. 주가매출비율 (Price-to-Sales Ratio, P/S Ratio)
-의미: 주가를 주당 매출(SPS)로 나눈 값으로, 기업의 매출에 비해 주가가 얼마나 비싼지를 나타냅니다. P/S 비율이 낮을수록 매출 대비 주가가 저평가되어 있다고 볼 수 있습니다.
-투자 적용: P/S 비율이 낮은 기업은 매출 기반의 가치가 높아, 성장 가능성이 있는 기업으로 평가될 수 있습니다.
+의미: 주가를 주당 매출(SPS)로 나눈 값으로, 기업의 매출에 비해 주가가 얼마나 비싼지를 나타냅니다.
 
 4. 배당 할인 모델 (Dividend Discount Model, DDM)
-의미: 미래의 배당금을 현재 가치로 할인하여 주식의 가치를 평가하는 방법입니다. 이 모델은 배당금이 안정적으로 지급되는 기업에 적합합니다.
-투자 적용: DDM을 통해 계산된 주가가 현재 주가보다 높다면, 해당 주식이 저평가되어 있다고 판단할 수 있습니다.
+의미: 미래의 배당금을 현재 가치로 할인하여 주식의 가치를 평가하는 방법입니다.
 
 5. 자기자본이익률 (Return on Equity, ROE)
-의미: 순이익을 자기자본으로 나눈 비율로, 기업이 자기자본을 얼마나 효율적으로 활용하고 있는지를 나타냅니다. ROE가 높을수록 기업의 수익성이 좋다고 볼 수 있습니다.
-투자 적용: ROE가 업종 평균보다 높다면, 해당 기업이 자본을 효율적으로 운영하고 있다는 신호로, 투자 매력도가 높아질 수 있습니다.
+의미: 순이익을 자기자본으로 나눈 비율로, 기업이 자기자본을 얼마나 효율적으로 활용하고 있는지를 나타냅니다.
 
 6. 부채비율 (Debt-to-Equity Ratio, D/E Ratio)
-의미: 총 부채를 자기자본으로 나눈 비율로, 기업의 재무 레버리지 정도를 나타냅니다. D/E 비율이 높을수록 기업이 부채에 의존하고 있다는 의미입니다.
-투자 적용: D/E 비율이 낮은 기업은 재무적으로 안정적일 가능성이 높아, 투자자에게 더 안전한 선택이 될 수 있습니다.
-
-예시
-예를 들어, B기업의 P/E 비율이 12, P/B 비율이 0.8, ROE가 15%라고 가정해 보겠습니다. 이 경우, B기업은 상대적으로 저평가된 주식일 가능성이 있으며, 자본을 효율적으로 활용하고 있다는 신호를 보입니다. 따라서, 장기 투자자로서 B기업에 투자하는 것이 좋은 선택이 될 수 있습니다.
-이러한 가치 평가 지표들을 종합적으로 분석하여 투자 결정을 내리는 것이 중요합니다. 각 지표는 서로 보완적인 역할을 하며, 이를 통해 보다 신뢰할 수 있는 투자 결정을 내릴 수 있습니다.
+의미: 총 부채를 자기자본으로 나눈 비율로, 기업의 재무 레버리지 정도를 나타냅니다.
 """
+
+# 문서 표시
+st.markdown(VALUATION_METRICS_DOC)
+
+# Footer
+st.sidebar.markdown("---")
+st.sidebar.text("Created by Sean J. Kim")
