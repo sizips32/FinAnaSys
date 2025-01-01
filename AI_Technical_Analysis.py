@@ -71,10 +71,10 @@ except ModuleNotFoundError:
 
 # Set up Streamlit app
 st.set_page_config(layout="wide")
-st.title("AI 기반 기술적 분석 시스템")
+st.title("AI 기반 재무-기술적 분석 시스템")
 st.markdown("""
 ### 분석 방법론
-이 시스템은 머신러닝을 활용한 고급 기술적 분석을 제공합니다.
+이 시스템은 머신러닝을 활용한 고급 재무-기술적 분석을 제공합니다.
 
 #### 주요 기능:
 1. **AI 기반 패턴 인식**
