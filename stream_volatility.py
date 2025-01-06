@@ -4,9 +4,46 @@ import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
 import datetime as dt
-from arch import arch_model
+try:
+    from arch import arch_model
+except ImportError:
+    st.error("""
+    arch 패키지가 설치되지 않았습니다. 터미널에서 다음 명령어를 실행하세요:
+    pip install arch
+    """)
 import matplotlib.font_manager as fm
 import plotly.graph_objects as go
+
+# 패키지 존재 여부 확인 및 에러 처리
+def check_dependencies():
+    missing_packages = []
+    try:
+        import streamlit
+    except ImportError:
+        missing_packages.append("streamlit")
+    try:
+        import pandas
+    except ImportError:
+        missing_packages.append("pandas")
+    try:
+        import yfinance
+    except ImportError:
+        missing_packages.append("yfinance")
+    try:
+        import arch
+    except ImportError:
+        missing_packages.append("arch")
+    
+    if missing_packages:
+        st.error(f"""
+        다음 패키지들이 설치되지 않았습니다: {', '.join(missing_packages)}
+        터미널에서 다음 명령어를 실행하세요:
+        pip install {' '.join(missing_packages)}
+        """)
+        st.stop()
+
+# 의존성 확인 실행
+check_dependencies()
 
 st.set_page_config(layout="wide")
 
@@ -107,13 +144,13 @@ hedge_ratio = st.sidebar.slider('헤지 비율 (%)', 5, 20, 10)
 volatility_threshold = st.sidebar.slider('변동성 임계값 (VIX 기준)', 10, 50, 20)
 
 # 베이지안 분석 파라미터
-prior_mean = st.sidebar.number_input('사전 기대 수익률', value=0.02, format="%.4f", 
-    help="베이지안 분석에서 사용할 사전 평균값입니다. 일반적으로 0.02 (2%) 정도로 설정합니다.")
-prior_variance = st.sidebar.number_input('사전 불확실성', value=0.01, format="%.4f",
+prior_mean = st.sidebar.number_input('사전 기대 수익률', value=0.10, format="%.4f", 
+    help="베이지안 분석에서 사용할 사전 평균값입니다. 일반적으로 0.10 (10%) 정도로 설정합니다.")
+prior_variance = st.sidebar.number_input('사전 불확실성', value=0.05, format="%.4f",
     help="베이지안 분석에서 사용할 사전 분산값입니다. 불확실성이 클수록 큰 값을 설정합니다.")
 
 # 사용자 입력을 통한 변동성 임계값 설정
-threshold = st.sidebar.number_input('변동성 임계값 입력', value=0.025, format="%.4f")  # 기본값 0.025
+threshold = st.sidebar.number_input('변동성 임계값 입력', value=0.05, format="%.4f")  # 기본값 0.05
 
 # 사용자 입력을 통한 무위험 수익률 설정
 risk_free_rate = st.sidebar.number_input('무위험 수익률 입력 (예: 0.05)', value=0.05, format="%.4f")  # 기본값 0.05
@@ -136,14 +173,14 @@ def calculate_volatility(data):
     data['Volatility'] = np.sqrt(results.conditional_volatility)
     return data
 
-def bayesian_analysis(data, prior_mean=0.02, prior_variance=0.01):
+def bayesian_analysis(data, prior_mean=0.10, prior_variance=0.05):
     """
     Perform Bayesian volatility analysis and calculate the posterior mean and variance.
 
     Args:
         data (pd.DataFrame): A DataFrame containing a 'Returns' column with return data.
-        prior_mean (float, optional): The prior mean for the Bayesian analysis. Defaults to 0.02.
-        prior_variance (float, optional): The prior variance for the Bayesian analysis. Defaults to 0.01.
+        prior_mean (float, optional): The prior mean for the Bayesian analysis. Defaults to 0.10.
+        prior_variance (float, optional): The prior variance for the Bayesian analysis. Defaults to 0.05.
 
     Returns:
         tuple: A tuple containing the posterior mean and posterior variance.
@@ -158,7 +195,7 @@ def bayesian_analysis(data, prior_mean=0.02, prior_variance=0.01):
     posterior_variance = 1 / (1 / prior_variance + 1 / likelihood_variance)
     return posterior_mean, posterior_variance
 
-def generate_investment_signal(posterior_mean, threshold=0.025):
+def generate_investment_signal(posterior_mean, threshold=0.05):
     """투자 신호를 생성합니다."""
     if posterior_mean > threshold:
         return "💡 **투자 신호: 사후 평균이 임계값을 초과했습니다. 투자 고려하세요!**"
@@ -312,7 +349,7 @@ if execute:
         """)
 
         # 5. 에르고딕 성질의 성립 여부 판단 및 투자 전략 제시
-        if difference < 0.01:
+        if difference < 0.10:
             st.write("""
             ✅ **에르고딕 성질이 강하게 성립합니다.**
             - 투자 전략이 장기적으로 매우 안정적일 것으로 예상됩니다.
