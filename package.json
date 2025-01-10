@@ -4,12 +4,16 @@
   "description": "Financial Analysis System",
   "main": "start.js",
   "scripts": {
-    "start": "node start.js",
-    "build": "pip install --upgrade pip && pip install -r requirements.txt",
+    "dev": "next dev",
+    "build": "next build && pip install --upgrade pip && pip install -r requirements.txt",
+    "start": "next start",
     "vercel-build": "echo 'Build step completed'",
     "postinstall": "pip install --upgrade pip && pip install -r requirements.txt"
   },
   "dependencies": {
+    "next": "^13.5.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "child_process": "^1.0.2"
   },
   "engines": {
