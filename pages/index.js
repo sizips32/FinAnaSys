@@ -1,20 +1,54 @@
 import Head from 'next/head';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const [outputs, setOutputs] = useState({});
-  const [loading, setLoading] = useState({});
+  const [loading, setLoading] = useState({
+    machine: false,
+    dividend: false,
+    portfolio: false,
+    quantum: false,
+    volatility: false,
+    technical: false,
+    wordcloud: false
+  });
+
+  // 전체 화면 모드로 새 탭을 여는 함수
+  const openInFullscreen = (url) => {
+    const newWindow = window.open(url, '_blank');
+    if (newWindow) {
+      newWindow.addEventListener('load', () => {
+        try {
+          if (newWindow.document.documentElement.requestFullscreen) {
+            newWindow.document.documentElement.requestFullscreen();
+          } else if (newWindow.document.documentElement.webkitRequestFullscreen) {
+            newWindow.document.documentElement.webkitRequestFullscreen();
+          } else if (newWindow.document.documentElement.msRequestFullscreen) {
+            newWindow.document.documentElement.msRequestFullscreen();
+          }
+        } catch (error) {
+          console.error('Fullscreen error:', error);
+        }
+      });
+    }
+  };
 
   const startAnalysis = async (type) => {
-    setLoading(prev => ({ ...prev, [type]: true }));
     try {
+      setLoading(prev => ({ ...prev, [type]: true }));
       const response = await fetch(`/api/analyze/${type}`, {
         method: 'POST'
       });
       const data = await response.json();
-      setOutputs(prev => ({ ...prev, [type]: data.message }));
+      
+      if (data.success) {
+        openInFullscreen(data.url);
+      } else {
+        console.error('Error:', data.error);
+        alert(data.error);
+      }
     } catch (error) {
-      setOutputs(prev => ({ ...prev, [type]: `Error: ${error.message}` }));
+      console.error('Error:', error);
+      alert('분석 시작 중 오류가 발생했습니다.');
     } finally {
       setLoading(prev => ({ ...prev, [type]: false }));
     }
@@ -323,15 +357,22 @@ export default function Home() {
               className="banner-button" 
               onClick={async () => {
                 try {
+                  setLoading(prev => ({ ...prev, wordcloud: true }));
                   const response = await fetch('/api/analyze/wordcloud', {
                     method: 'POST'
                   });
                   const data = await response.json();
                   if (data.success) {
                     window.open(data.url, '_blank');
+                  } else {
+                    console.error('Error:', data.error);
+                    alert(data.error);
                   }
                 } catch (error) {
                   console.error('Error:', error);
+                  alert('분석 시작 중 오류가 발생했습니다.');
+                } finally {
+                  setLoading(prev => ({ ...prev, wordcloud: false }));
                 }
               }}
               disabled={loading.wordcloud}
@@ -368,23 +409,11 @@ export default function Home() {
             </div>
             <button 
               className="run-button" 
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/analyze/machine', {
-                    method: 'POST'
-                  });
-                  const data = await response.json();
-                  if (data.success) {
-                    window.open(data.url, '_blank');
-                  }
-                } catch (error) {
-                  console.error('Error:', error);
-                }
-              }}
+              onClick={() => startAnalysis('machine')}
+              disabled={loading.machine}
             >
-              분석 시작
+              {loading.machine ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">Streamlit 앱에서 분석을 진행해주세요.</div>
           </div>
 
           <div className="analysis-card">
@@ -404,7 +433,6 @@ export default function Home() {
             >
               {loading.dividend ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.dividend}</div>
           </div>
 
           <div className="analysis-card">
@@ -424,7 +452,6 @@ export default function Home() {
             >
               {loading.portfolio ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.portfolio}</div>
           </div>
 
           <div className="analysis-card">
@@ -444,7 +471,6 @@ export default function Home() {
             >
               {loading.quantum ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.quantum}</div>
           </div>
 
           <div className="analysis-card">
@@ -464,7 +490,6 @@ export default function Home() {
             >
               {loading.volatility ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.volatility}</div>
           </div>
 
           <div className="analysis-card">
@@ -484,7 +509,6 @@ export default function Home() {
             >
               {loading.technical ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.technical}</div>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && pip install --upgrade pip && pip install -r requirements.txt",
-    "start": "next start",
+    "start": "next start -p 5050",
     "vercel-build": "echo 'Build step completed'",
     "postinstall": "pip install --upgrade pip && pip install -r requirements.txt"
   },
