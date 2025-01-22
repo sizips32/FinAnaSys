@@ -1,55 +1,37 @@
-import { spawn } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
   const { type } = req.query;
-  
-  // Python 스크립트 매핑
-  const scriptMap = {
-    'wordcloud': 'word_cloud.py',
-    'dividend': 'stream_dividend.py',
-    'portfolio': 'stream_portfolio.py',
-    'quantum': 'stream_quantum.py',
-    'volatility': 'stream_volatility.py',
-    'technical': 'AI_Technical_Analysis.py'
-  };
 
-  const script = scriptMap[type];
-  if (!script) {
-    return res.status(400).json({ message: '잘못된 분석 유형입니다.' });
-  }
-
-  try {
-    // 이미 실행 중인 스트림릿 프로세스 확인
-    const checkPort = spawn('lsof', ['-i', ':8501']);
-    
-    checkPort.stdout.on('data', (data) => {
-      // 이미 실행 중인 프로세스가 있다면 종료
-      if (data.toString().includes('streamlit')) {
-        const pid = data.toString().split(/\s+/)[1];
-        process.kill(parseInt(pid));
+  if (req.method === 'POST') {
+    try {
+      if (type === 'machine') {
+        // Streamlit 실행
+        await execAsync('streamlit run stream_machine.py', { detached: true });
+        res.status(200).json({ 
+          success: true, 
+          message: 'Streamlit 앱이 실행되었습니다.',
+          url: 'http://localhost:8501'
+        });
+      } else if (type === 'wordcloud') {
+        // 워드 클라우드 Streamlit 실행
+        await execAsync('streamlit run word_cloud.py', { detached: true });
+        res.status(200).json({ 
+          success: true, 
+          message: '워드 클라우드 분석이 시작되었습니다.',
+          url: 'http://localhost:8501'
+        });
+      } else {
+        // 다른 분석 타입들에 대한 처리
+        res.status(200).json({ message: `${type} 분석이 시작되었습니다.` });
       }
-    });
-
-    checkPort.on('close', () => {
-      // 새로운 스트림릿 프로세스 시작
-      const streamlit = spawn('streamlit', ['run', script], {
-        detached: true,
-        stdio: 'ignore'
-      });
-      
-      streamlit.unref();
-
-      // 응답 전송 (URL 제거)
-      res.status(200).json({
-        message: '분석이 시작되었습니다.'
-      });
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: '분석 실행 중 오류가 발생했습니다.' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  } else {
+    res.status(405).json({ error: 'Method not allowed' });
   }
 } 

@@ -84,16 +84,104 @@ export default function Home() {
         }
 
         .container {
-          max-width: 100%;
+          max-width: 1400px;
           margin: 0 auto;
-          padding: 1rem;
+          padding: 2rem;
+        }
+
+        // 워드 클라우드 배너 스타일
+        .featured-banner {
+          background: linear-gradient(135deg, rgba(135, 206, 235, 0.15) 0%, rgba(135, 206, 235, 0.05) 100%);
+          border-radius: 12px;
+          margin: 0 1rem 2rem 1rem;
+          padding: 1rem 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(135, 206, 235, 0.2);
+          box-shadow: 0 4px 24px 0 rgba(79, 179, 232, 0.15);
+        }
+
+        .banner-title-group {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          min-width: fit-content;
+        }
+
+        .banner-title {
+          font-size: 1.4rem;
+          font-weight: 700;
+          margin: 0;
+          white-space: nowrap;
+          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .banner-details {
+          display: flex;
+          align-items: center;
+          gap: 2rem;
+          flex: 1;
+          margin: 0;
+          overflow-x: auto;
+          padding: 0.5rem 0;
+        }
+
+        .banner-detail-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          white-space: nowrap;
+        }
+
+        .banner-button {
+          background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+          color: white;
+          border: none;
+          padding: 0.6rem 1.2rem;
+          border-radius: 8px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+          min-width: fit-content;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .banner-button:hover {
+          background: linear-gradient(135deg, #243B55 0%, #141E30 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .banner-button:disabled {
+          background: linear-gradient(135deg, #808080 0%, #666666 100%);
+          cursor: not-allowed;
+          transform: none;
+        }
+
+        .banner-output {
+          background: rgba(0,0,0,0.1);
+          padding: 0.8rem;
+          border-radius: 8px;
+          font-family: monospace;
+          font-size: 0.9rem;
+          color: var(--text-secondary);
+          margin-top: 1rem;
+          max-width: 600px;
         }
 
         .analysis-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1.5rem;
-          margin-top: 1rem;
           padding: 0 1rem;
         }
 
@@ -102,7 +190,7 @@ export default function Home() {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           border-radius: 15px;
-          padding: 1.5rem;
+          padding: 1.8rem;
           box-shadow: var(--card-shadow);
           border: 1px solid rgba(135, 206, 235, 0.3);
           transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -111,19 +199,29 @@ export default function Home() {
           flex-direction: column;
         }
 
+        // 워드 클라우드 카드 특별 스타일
+        .featured-analysis .analysis-card {
+          background: linear-gradient(135deg, rgba(135, 206, 235, 0.35) 0%, rgba(135, 206, 235, 0.25) 100%);
+          border: 1px solid rgba(135, 206, 235, 0.4);
+          box-shadow: 0 12px 40px 0 rgba(79, 179, 232, 0.4);
+        }
+
         .analysis-card:hover {
           transform: translateY(-5px);
           box-shadow: 0 12px 40px 0 rgba(79, 179, 232, 0.4);
         }
 
         .analysis-card h2 {
-          color: #2E8B57;
           margin-bottom: 1rem;
           font-size: 1.4rem;
           font-weight: 700;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          background: linear-gradient(135deg, #24243e 0%, #0f0c29 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .analysis-description {
@@ -146,18 +244,27 @@ export default function Home() {
           margin-top: 1rem;
           border: none;
           border-radius: 8px;
-          background: linear-gradient(45deg, #4FB3E8, #87CEEB);
+          background: linear-gradient(135deg, #000428 0%, #004e92 100%);
           color: white;
           font-weight: 500;
           font-size: 1rem;
           cursor: pointer;
           transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .run-button:hover {
-          background: linear-gradient(45deg, #87CEEB, #B0E2FF);
+          background: linear-gradient(135deg, #004e92 0%, #000428 100%);
           transform: translateY(-2px);
-          box-shadow: 0 5px 15px rgba(79, 179, 232, 0.4);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .run-button:disabled {
+          background: linear-gradient(135deg, #808080 0%, #666666 100%);
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
 
         .output-area {
@@ -171,9 +278,17 @@ export default function Home() {
           white-space: pre-wrap;
         }
 
-        @media (max-width: 1200px) {
-          .analysis-grid {
-            grid-template-columns: repeat(2, 1fr);
+        @media (max-width: 1024px) {
+          .featured-banner {
+            flex-wrap: wrap;
+            padding: 1rem;
+            gap: 1rem;
+          }
+
+          .banner-details {
+            order: 3;
+            justify-content: flex-start;
+            width: 100%;
           }
         }
 
@@ -181,8 +296,16 @@ export default function Home() {
           .analysis-grid {
             grid-template-columns: 1fr;
           }
-          .header h1 {
-            font-size: 2rem;
+          .container {
+            padding: 1rem;
+          }
+          .featured-banner {
+            margin: 0 0.5rem 1.5rem 0.5rem;
+          }
+          
+          .banner-title-group {
+            width: 100%;
+            justify-content: space-between;
           }
         }
       `}</style>
@@ -193,25 +316,75 @@ export default function Home() {
       </header>
 
       <div className="container">
-        <div className="analysis-grid">
-          <div className="analysis-card">
-            <h2>워드 클라우드 분석</h2>
-            <div className="analysis-description">
-              텍스트 데이터를 시각적으로 분석합니다.
-              <div className="analysis-details">
-                • 텍스트 파일 분석<br />
-                • 주요 키워드 추출<br />
-                • 단어 빈도 시각화
-              </div>
-            </div>
+        <div className="featured-banner">
+          <div className="banner-title-group">
+            <h2 className="banner-title">워드 클라우드 분석</h2>
             <button 
-              className="run-button" 
-              onClick={() => startAnalysis('wordcloud')}
+              className="banner-button" 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/analyze/wordcloud', {
+                    method: 'POST'
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    window.open(data.url, '_blank');
+                  }
+                } catch (error) {
+                  console.error('Error:', error);
+                }
+              }}
               disabled={loading.wordcloud}
             >
               {loading.wordcloud ? '분석 중...' : '분석 시작'}
             </button>
-            <div className="output-area">{outputs.wordcloud}</div>
+          </div>
+          <div className="banner-details">
+            <div className="banner-detail-item">
+              <span>•</span>
+              <span>텍스트 파일 분석</span>
+            </div>
+            <div className="banner-detail-item">
+              <span>•</span>
+              <span>주요 키워드 추출</span>
+            </div>
+            <div className="banner-detail-item">
+              <span>•</span>
+              <span>단어 빈도 시각화</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="analysis-grid">
+          <div className="analysis-card">
+            <h2>머신러닝 분석</h2>
+            <div className="analysis-description">
+              머신러닝 기반의 고급 분석을 제공합니다.
+              <div className="analysis-details">
+                • 딥러닝 모델 기반 예측<br />
+                • 시계열 패턴 분석<br />
+                • AI 기반 투자 전략
+              </div>
+            </div>
+            <button 
+              className="run-button" 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/analyze/machine', {
+                    method: 'POST'
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    window.open(data.url, '_blank');
+                  }
+                } catch (error) {
+                  console.error('Error:', error);
+                }
+              }}
+            >
+              분석 시작
+            </button>
+            <div className="output-area">Streamlit 앱에서 분석을 진행해주세요.</div>
           </div>
 
           <div className="analysis-card">

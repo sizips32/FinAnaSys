@@ -17,6 +17,7 @@ from analysis import (
     perform_technical_analysis
 )
 from word_cloud import TextAnalyzer  # TextAnalyzer 임포트 추가
+import requests
 
 app = Flask(__name__,
             static_url_path='/static',
@@ -35,6 +36,15 @@ else:
     logging.basicConfig(level=logging.WARNING,
                         format='%(asctime)s - %(levelname)s - %(message)s')
 
+# 분석 타입 설정
+ANALYSIS_TYPES = {
+    'dividend': {'port': 8501, 'script': 'stream_dividend.py'},
+    'portoptima': {'port': 8502, 'script': 'stream_portfolio.py'},
+    'quantum': {'port': 8503, 'script': 'stream_quantum.py'},
+    'voltrade': {'port': 8504, 'script': 'stream_volatility.py'},
+    'technical': {'port': 8505, 'script': 'AI_Technical_Analysis.py'},
+    'wordcloud': {'port': 8506, 'script': 'word_cloud.py'}
+}
 
 def open_browser():
     """메인 페이지용 브라우저 오프너"""
@@ -58,15 +68,17 @@ def open_analysis_page(type):
 
 
 def kill_process_on_port(port):
-    """포트를 점유 중인 프로세스 종료"""
+    """지정된 포트의 프로세스 종료"""
     try:
-        for proc in psutil.process_iter(['pid', 'connections']):
-            for conn in proc.info['connections']:
-                if conn.status == 'LISTEN' and conn.laddr.port == port:  # 'LISTEN' 상태만 종료
-                    proc.kill()
-                    logging.info(f"포트 {port}의 프로세스를 종료했습니다.")
+        if sys.platform.startswith('win'):
+            subprocess.run(['taskkill', '/F', '/PID', 
+                          f"$(netstat -ano | findstr :{port} | awk '{{print $5}}'"],
+                         shell=True)
+        else:
+            subprocess.run(['kill', '-9', 
+                          f"$(lsof -t -i:{port})"], shell=True)
     except Exception as e:
-        logging.warning(f"포트 {port} 종료 실패: {e}")
+        logging.error(f"프로세스 종료 실패 (포트 {port}): {e}")
 
 
 @app.route('/')
@@ -74,49 +86,35 @@ def index():
     return render_template('index.html')
 
 
+def wait_for_streamlit(port, timeout=30):
+    """Streamlit 서버가 준비될 때까지 대기"""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.get(f'http://localhost:{port}')
+            if response.status_code == 200:
+                return True
+        except requests.exceptions.RequestException:
+            time.sleep(1)
+    return False
+
+
 @app.route('/run/<analysis_type>', methods=['POST'])
 def run_analysis(analysis_type):
     try:
-        # 분석 매핑 수정
-        analysis_mapping = {
-            'dividend': {'port': 8501, 'file': 'stream_dividend.py'},
-            'portoptima': {'port': 8502, 'file': 'stream_portfolio.py'},
-            'quantum': {'port': 8503, 'file': 'stream_quantum.py'},
-            'voltrade': {'port': 8504, 'file': 'stream_volatility.py'},
-            'technical': {'port': 8505, 'file': 'AI_Technical_Analysis.py'},
-            'wordcloud': {'port': 8506, 'file': 'word_cloud.py'}
-        }
-
-        # 분석 타입 검증 및 로깅 추가
-        if analysis_type == 'wordcloud':
-            logging.info(f"워드클라우드 분석 시작: {analysis_type}")
-            
-        details = analysis_mapping.get(analysis_type)
-        if not details:
-            logging.error(f"지원하지 않는 분석 유형: {analysis_type}")
+        if analysis_type not in ANALYSIS_TYPES:
             return jsonify({
                 'success': False,
-                'error': f'지원하지 않는 분석 유형입니다: {analysis_type}'
+                'error': '지원하지 않는 분석 유형입니다.'
             })
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        streamlit_script = os.path.join(current_dir, details['file'])
-        
-        # 상세 로깅 추가
-        logging.info(f"스크립트 경로: {streamlit_script}")
-        logging.info(f"현재 디렉토리: {current_dir}")
-
-        if not os.path.isfile(streamlit_script):
-            logging.error(f"파일을 찾을 수 없음: {streamlit_script}")
-            return jsonify({
-                'success': False,
-                'error': f'분석 스크립트를 찾을 수 없습니다: {details["file"]}'
-            })
-
+        details = ANALYSIS_TYPES[analysis_type]
+        streamlit_script = details['script']
         port = details['port']
+        
+        # 기존 프로세스 종료
         kill_process_on_port(port)
-
-        # Streamlit 프로세스 시작 전 로깅
+        
         logging.info(f"Streamlit 실행 준비: {streamlit_script} (포트: {port})")
         
         process = subprocess.Popen([
@@ -125,29 +123,37 @@ def run_analysis(analysis_type):
             '--server.port', str(port),
             '--server.address', 'localhost'
         ])
-
-        # 서버 준비 시간 증가 및 상태 확인
-        time.sleep(3)
+        
+        # 서버 준비 상태 확인
+        if not wait_for_streamlit(port):
+            process.kill()
+            logging.error("Streamlit 서버 시작 시간 초과")
+            return jsonify({
+                'success': False,
+                'error': '분석 서버 시작에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            })
         
         if process.poll() is not None:
             logging.error("Streamlit 프로세스가 비정상 종료되었습니다.")
             return jsonify({
                 'success': False,
-                'error': 'Streamlit 실행 실패'
+                'error': '분석 서버가 비정상 종료되었습니다.'
             })
-
-        # 성공 로깅
+        
         logging.info(f"분석 시작 성공: {analysis_type}")
         
         return jsonify({
             'success': True,
             'url': f'http://localhost:{port}',
-            'message': f'분석이 시작되었습니다. 새 탭이 열립니다.'
+            'message': '분석이 시작되었습니다. 새 탭이 열립니다.'
         })
 
     except Exception as e:
-        logging.error(f"분석 실행 실패: {e}")
-        return jsonify({'success': False, 'error': str(e)})
+        logging.error(f"분석 실행 실패: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': '분석을 시작할 수 없습니다. 시스템 관리자에게 문의하세요.'
+        })
 
 
 @app.route('/analyze', methods=['POST'])
@@ -158,45 +164,64 @@ def analyze_text():
             if not text:
                 return jsonify({
                     'success': False,
-                    'error': '분석할 텍스트가 없습니다.'
+                    'error': '분석할 텍스트를 입력해주세요.'
                 })
         else:
             file = request.files['file']
             if file.filename == '':
                 return jsonify({
                     'success': False,
-                    'error': '파일이 선택되지 않았습니다.'
+                    'error': '파일을 선택해주세요.'
                 })
             
-            # 파일 내용 읽기
-            if file.filename.endswith('.pdf'):
-                text = load_pdf(file)
-            elif file.filename.endswith('.md'):
-                text = load_md(file)
-            else:
-                text = file.read().decode('utf-8')
+            try:
+                # 파일 내용 읽기
+                if file.filename.endswith('.pdf'):
+                    text = load_pdf(file)
+                elif file.filename.endswith('.md'):
+                    text = load_md(file)
+                else:
+                    text = file.read().decode('utf-8')
+            except UnicodeDecodeError:
+                return jsonify({
+                    'success': False,
+                    'error': '파일 인코딩이 올바르지 않습니다. UTF-8 형식의 텍스트 파일을 사용해주세요.'
+                })
+            except Exception as e:
+                logging.error(f"파일 읽기 오류: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': '파일을 읽는 중 오류가 발생했습니다. 파일이 손상되었거나 지원하지 않는 형식일 수 있습니다.'
+                })
         
         # 텍스트 분석 수행
-        analyzer = TextAnalyzer()
-        wordcloud_img, top_words = analyzer.analyze_text(text)  # 수정된 반환값 처리
-        
-        if not wordcloud_img:
+        try:
+            analyzer = TextAnalyzer()
+            wordcloud_img, top_words = analyzer.analyze_text(text)
+            
+            if not wordcloud_img:
+                return jsonify({
+                    'success': False,
+                    'error': '분석할 텍스트가 충분하지 않습니다. 더 많은 텍스트를 입력해주세요.'
+                })
+            
+            return jsonify({
+                'success': True,
+                'wordcloud': wordcloud_img,
+                'top_words': top_words
+            })
+        except Exception as e:
+            logging.error(f"텍스트 분석 오류: {str(e)}")
             return jsonify({
                 'success': False,
-                'error': '워드클라우드 생성에 실패했습니다.'
+                'error': '텍스트 분석 중 오류가 발생했습니다. 입력된 텍스트를 확인해주세요.'
             })
-        
-        return jsonify({
-            'success': True,
-            'wordcloud': wordcloud_img,  # 이미지 데이터
-            'top_words': top_words  # 상위 단어 목록
-        })
             
     except Exception as e:
         logging.error(f"요청 처리 중 오류 발생: {str(e)}")
         return jsonify({
             'success': False,
-            'error': f'요청 처리 중 오류가 발생했습니다: {str(e)}'
+            'error': '요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.'
         })
 
 def load_md(file):
