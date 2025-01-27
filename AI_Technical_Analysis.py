@@ -15,6 +15,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 from importlib.metadata import version, PackageNotFoundError
+import requests
+from openai import OpenAI
+from openai import APIError, APIConnectionError, RateLimitError, AuthenticationError
 
 # 패키지 버전 검증 로직 수정
 def verify_package_versions():
@@ -608,42 +611,165 @@ def main():
             # Analyze chart with LLaMA 3.2 Vision
             st.subheader("AI-Powered Analysis")
 
-            def prepare_analysis_prompt():
-                return """
-                You are a Stock Trader specializing in Technical Analysis at a top financial institution.
-                Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
-                Base your recommendation only on the candlestick chart and the displayed technical indicators.
-                First, provide the recommendation, then, provide your detailed reasoning.
+            # API 설정 섹션
+            with st.sidebar:
+                st.markdown("### 🔑 API 설정")
+                api_key = st.text_input(
+                    "OpenAI API Key를 입력하세요",
+                    type="password",
+                    help="https://platform.openai.com/account/api-keys 에서 API 키를 확인할 수 있습니다."
+                )
+                
+                # API 키 형식 검증
+                if api_key:
+                    if not api_key.startswith('sk-') or len(api_key) < 20:
+                        st.sidebar.error("올바른 형식의 API 키를 입력해주세요. (sk-로 시작)")
+                        api_key = None
+
+                # 모델 선택
+                model_options = {
+                    "GPT-4 Vision": "gpt-4-vision-preview",
+                    "GPT-4o-mini": "gpt-4o-mini",
+                    "GPT-3.5 Turbo": "gpt-3.5-turbo"
+                }
+                selected_model = st.selectbox(
+                    "AI 모델 선택",
+                    options=list(model_options.keys()),
+                    index=0
+                )
+
+            def prepare_analysis_prompt(data, indicators):
+                """AI 분석을 위한 프롬프트 생성"""
+                current_price = data['Close'].iloc[-1]
+                price_change = ((current_price - data['Close'].iloc[0]) / data['Close'].iloc[0]) * 100
+                
+                return f"""
+                주어진 주식 차트에 대해 기술적 분석을 수행하세요. 다음 정보를 바탕으로 분석해주세요:
+
+                1. 현재가: {current_price:.2f}
+                2. 기간 수익률: {price_change:.2f}%
+                3. 표시된 지표: {', '.join(indicators)}
+
+                다음 순서로 분석해주세요:
+                1. 현재 시장 상황 요약
+                2. 주요 기술적 지표 분석
+                3. 매수/매도/관망 추천과 그 근거
+                4. 주의해야 할 리스크 요인
                 """
 
             if st.button("Run AI Analysis", key="main_ai_analysis_button"):
-                with st.spinner("Analyzing the chart, please wait..."):
+                if not api_key:
+                    st.error("올바른 OpenAI API Key를 입력해주세요.")
+                    st.info("API 키는 'sk-'로 시작하며, OpenAI 웹사이트에서 확인할 수 있습니다.")
+                    return
+                
+                with st.spinner("차트 분석 중..."):
                     try:
-                        # Save chart as a temporary image
+                        # OpenAI 클라이언트 초기화
+                        client = OpenAI(api_key=api_key.strip())  # 공백 제거
+                        
+                        # 임시 파일 생성 및 관리
                         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
-                            fig.write_image(tmpfile.name)
-                            tmpfile_path = tmpfile.name
-
-                        # Read image and encode to Base64
-                        with open(tmpfile_path, "rb") as image_file:
-                            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-
-                        # Prepare AI analysis request
-                        messages = [{
-                            'role': 'user',
-                            'content': prepare_analysis_prompt(),
-                            'images': [image_data]
-                        }]
-                        response = ollama.chat(model='llama3.2-vision', messages=messages)
-
-                        # Display AI analysis result
-                        st.write("**AI Analysis Results:**")
-                        st.write(response["message"]["content"])
-
-                        # Clean up temporary file
-                        os.remove(tmpfile_path)
+                            try:
+                                # 차트 이미지 저장
+                                fig.write_image(tmpfile.name, format="png")
+                                
+                                # 이미지 인코딩
+                                with open(tmpfile.name, "rb") as image_file:
+                                    image_data = base64.b64encode(image_file.read()).decode('utf-8')
+                                
+                                # API 요청 준비
+                                messages = []
+                                
+                                # 선택된 모델이 Vision 모델인 경우
+                                if selected_model == "GPT-4 Vision":
+                                    messages = [
+                                        {
+                                            "role": "user",
+                                            "content": [
+                                                {
+                                                    "type": "text",
+                                                    "text": prepare_analysis_prompt(data, indicators)
+                                                },
+                                                {
+                                                    "type": "image_url",
+                                                    "image_url": {
+                                                        "url": f"data:image/png;base64,{image_data}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                else:
+                                    # Vision이 아닌 모델의 경우 이미지 없이 텍스트만 전송
+                                    messages = [
+                                        {
+                                            "role": "user",
+                                            "content": prepare_analysis_prompt(data, indicators)
+                                        }
+                                    ]
+                                
+                                # API 요청
+                                response = client.chat.completions.create(
+                                    model=model_options[selected_model],
+                                    messages=messages,
+                                    max_tokens=2000,
+                                    temperature=0.7
+                                )
+                                
+                                if response and hasattr(response, 'choices') and len(response.choices) > 0:
+                                    analysis_text = response.choices[0].message.content
+                                    
+                                    # 분석 결과 표시
+                                    st.markdown("### 🤖 AI 분석 결과")
+                                    st.markdown(analysis_text)
+                                    
+                                    # 분석 시간 표시
+                                    st.caption(f"분석 완료 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                                    st.caption(f"사용 모델: {selected_model}")
+                                else:
+                                    st.error("API 응답에서 분석 결과를 찾을 수 없습니다.")
+                            
+                            except RateLimitError:
+                                st.error("API 사용량 한도에 도달했습니다.")
+                                st.warning("잠시 후 다시 시도하거나 API 키의 한도를 확인해주세요.")
+                            
+                            except APIError as e:
+                                st.error(f"API 오류: {str(e)}")
+                                st.warning("잠시 후 다시 시도해주세요.")
+                            
+                            except AuthenticationError:
+                                st.error("API 키 인증 실패")
+                                st.warning("""
+                                다음 사항을 확인해주세요:
+                                1. API 키가 올바르게 입력되었는지 확인
+                                2. API 키가 유효한지 OpenAI 웹사이트에서 확인
+                                3. 결제 정보가 등록되어 있는지 확인
+                                """)
+                            
+                            except APIConnectionError:
+                                st.error("API 연결 오류")
+                                st.warning("인터넷 연결을 확인하고 다시 시도해주세요.")
+                            
+                            except Exception as e:
+                                st.error(f"AI 분석 중 오류 발생: {str(e)}")
+                                st.warning("""
+                                다음 사항을 확인해주세요:
+                                1. API 키가 올바른지 확인
+                                2. 인터넷 연결 상태 확인
+                                3. 잠시 후 다시 시도
+                                """)
+                            
+                            finally:
+                                # 임시 파일 정리
+                                try:
+                                    os.unlink(tmpfile.name)
+                                except Exception as e:
+                                    st.warning(f"임시 파일 삭제 중 오류 발생: {str(e)}")
+                    
                     except Exception as e:
-                        st.error(f"AI 분석 중 오류 발생: {str(e)}")
+                        st.error(f"차트 이미지 생성 중 오류 발생: {str(e)}")
+                        st.warning("차트 데이터를 다시 불러온 후 시도해주세요.")
 
             def calculate_signal_probabilities(data, symbol):
                 """각 지표별 시그널을 분석하여 매수/매도/관망 확률 계산"""
