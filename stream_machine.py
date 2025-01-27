@@ -6,7 +6,7 @@ from sklearn.model_selection import (
     train_test_split,
     GridSearchCV
 )
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.metrics import (
@@ -19,13 +19,14 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
-    roc_curve
+    roc_curve,
+    auc
 )
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Input, BatchNormalization
 from tensorflow.keras.optimizers import Adam
 from xgboost import XGBRegressor, XGBClassifier
 try:
@@ -38,6 +39,8 @@ import plotly.express as px
 import time
 import sys
 from tensorflow.keras.callbacks import EarlyStopping
+from sklearn.utils.class_weight import compute_class_weight
+import lightgbm as lgb
 
 # 전역 변수 설정
 XGBOOST_AVAILABLE = False
@@ -219,7 +222,7 @@ test_size = st.sidebar.slider(
 )
 
 # 데이터 다운로드 함수
-@st.cache_data
+@st.cache_data(ttl=3600)  # 1시간 캐시
 def get_stock_data(ticker, start, end):
     try:
         data = yf.download(ticker, start=start, end=end)
@@ -514,30 +517,35 @@ class ProbabilisticPredictor:
 # 투자 신호 생성 함수 추가
 def generate_trading_signals(data, pred_mean, pred_std):
     """매수/매도/관망 신호 생성"""
-    signals = pd.DataFrame(index=data.index[-len(pred_mean):])  # 수정된 부분
-    
-    # 기술적 지표 기반 신호
-    signals['RSI_signal'] = np.where(data['RSI'].iloc[-len(pred_mean):] < 30, 1, 
-                                   np.where(data['RSI'].iloc[-len(pred_mean):] > 70, -1, 0))
-    
-    signals['MACD_signal'] = np.where(data['MACD'].iloc[-len(pred_mean):] > data['Signal'].iloc[-len(pred_mean):], 1, 
-                                     np.where(data['MACD'].iloc[-len(pred_mean):] < data['Signal'].iloc[-len(pred_mean):], -1, 0))
-    
-    # 볼린저 밴드 기반 신호
-    signals['BB_signal'] = np.where(data['Close'].iloc[-len(pred_mean):] < data['BB_lower'].iloc[-len(pred_mean):], 1,
-                                   np.where(data['Close'].iloc[-len(pred_mean):] > data['BB_upper'].iloc[-len(pred_mean):], -1, 0))
-    
-    # 확률적 예측 기반 신호
-    current_price = data['Close'].iloc[-len(pred_mean):]
-    confidence_interval = 1.96 * pred_std
-    
-    signals['Pred_signal'] = np.where(pred_mean - confidence_interval > current_price, 1,
-                                     np.where(pred_mean + confidence_interval < current_price, -1, 0))
-    
-    # 종합 신호
-    signals['Final_signal'] = signals.mean(axis=1)
-    
-    return signals
+    try:
+        signals = pd.DataFrame(index=data.index[-len(pred_mean):])
+        
+        # 기술적 지표 기반 신호
+        signals['RSI_signal'] = np.where(data['RSI'].iloc[-len(pred_mean):] < 30, 'BUY',
+                                       np.where(data['RSI'].iloc[-len(pred_mean):] > 70, 'SELL', 'HOLD'))
+        
+        signals['MACD_signal'] = np.where(data['MACD'].iloc[-len(pred_mean):] > data['Signal'].iloc[-len(pred_mean):], 'BUY',
+                                        np.where(data['MACD'].iloc[-len(pred_mean):] < data['Signal'].iloc[-len(pred_mean):], 'SELL', 'HOLD'))
+        
+        # 볼린저 밴드 기반 신호
+        signals['BB_signal'] = np.where(data['Close'].iloc[-len(pred_mean):] < data['BB_lower'].iloc[-len(pred_mean):], 'BUY',
+                                      np.where(data['Close'].iloc[-len(pred_mean):] > data['BB_upper'].iloc[-len(pred_mean):], 'SELL', 'HOLD'))
+        
+        # 확률적 예측 기반 신호
+        current_price = data['Close'].iloc[-len(pred_mean):]
+        confidence_interval = 1.96 * pred_std
+        
+        signals['Pred_signal'] = np.where(pred_mean - confidence_interval > current_price, 'BUY',
+                                        np.where(pred_mean + confidence_interval < current_price, 'SELL', 'HOLD'))
+        
+        # 종합 신호 (최빈값 기준)
+        signals['Final_signal'] = signals.mode(axis=1)[0]
+        
+        return signals['Final_signal']
+        
+    except Exception as e:
+        st.error(f"매매 신호 생성 중 오류 발생: {str(e)}")
+        return None
 
 # 리스크 관리 지표 계산 함수 추가
 def calculate_risk_metrics(data, signals):
@@ -655,151 +663,333 @@ class ProbabilisticAnalyzer:
         self.sequence_length = sequence_length
         self.models = {}
         self.predictions = {}
-        self.feature_importance = {}
-        self.prepare_data()
-    
-    def prepare_data(self):
-        """데이터 전처리 및 시퀀스 데이터 준비"""
+        self.signal_probabilities = {}
+        self.linear_model = None
+        self.poly_features = None
+        
+    def prepare_features(self):
+        """예측을 위한 특성 준비"""
         try:
-            # 기존 데이터 준비
-            self.feature_names = [col for col in self.data.columns 
-                                if col not in ['Date', 'Target', 'Label', 'Close']]
+            # 기본 특성 선택
+            features = [
+                'RSI', 'MACD', 'Signal', 'BB_upper', 'BB_lower', 'MA20',
+                'Volume', 'Close', 'High', 'Low', 'Open'
+            ]
             
-            self.data['Target'] = self.data['Close'].shift(-1) / self.data['Close'] - 1
-            self.data['Label'] = np.where(self.data['Target'] > 0, 1, 0)
-            self.data.dropna(inplace=True)
+            # 데이터 복사본 생성
+            df = self.data.copy()
+            
+            # 기술적 지표 계산
+            df['Target'] = df['Close'].shift(-1) > df['Close']
+            df['BB_Position'] = (df['Close'] - df['BB_lower']) / (df['BB_upper'] - df['BB_lower'])
+            df['Price_Change'] = df['Close'].pct_change()
+            df['Volume_Change'] = df['Volume'].pct_change()
+            df['ROC'] = df['Close'].pct_change(periods=12) * 100
+            df['MOM'] = df['Close'].diff(periods=10)
+            df['Volatility'] = df['Close'].pct_change().rolling(window=20).std()
+            df['SMA_5'] = df['Close'].rolling(window=5).mean()
+            df['SMA_20'] = df['Close'].rolling(window=20).mean()
+            df['MA_Cross'] = np.where(df['SMA_5'] > df['SMA_20'], 1, -1)
+            
+            # 추가 특성 목록에 추가
+            features.extend(['BB_Position', 'Price_Change', 'Volume_Change', 
+                           'ROC', 'MOM', 'Volatility', 'MA_Cross'])
+            
+            # NaN 제거
+            df = df.dropna()
+            
+            # 마지막 행 제거 (다음 날 종가를 알 수 없음)
+            df = df.iloc[:-1]
+            
+            # 데이터 분할
+            train_size = int(len(df) * (1 - self.test_size))
+            
+            # 학습/테스트 데이터 분할
+            train_data = df[:train_size]
+            test_data = df[train_size:]
+            
+            # X, y 데이터 준비
+            self.X_train = train_data[features]
+            self.X_test = test_data[features]
+            self.y_train = train_data['Target']
+            self.y_test = test_data['Target']
             
             # 스케일링
             self.scaler = MinMaxScaler()
-            scaled_features = self.scaler.fit_transform(self.data[self.feature_names])
+            self.X_train_scaled = self.scaler.fit_transform(self.X_train)
+            self.X_test_scaled = self.scaler.transform(self.X_test)
             
-            # 데이터 분할
-            train_size = int(len(scaled_features) * (1 - self.test_size))
+            # LSTM용 시퀀스 데이터
+            self.X_train_seq = self.create_sequences(self.X_train_scaled)
+            self.X_test_seq = self.create_sequences(self.X_test_scaled)
+            self.y_train_seq = self.y_train[self.sequence_length:].values
+            self.y_test_seq = self.y_test[self.sequence_length:].values
             
-            self.X_train = scaled_features[:train_size]
-            self.X_test = scaled_features[train_size:]
-            self.y_train = self.data['Label'].values[:train_size]
-            self.y_test = self.data['Label'].values[train_size:]
+            # 선형 회귀를 위한 데이터 준비
+            self.poly_features = PolynomialFeatures(degree=2, include_bias=False)
+            X_train_poly = self.poly_features.fit_transform(self.X_train_scaled)
+            X_test_poly = self.poly_features.transform(self.X_test_scaled)
             
-            # LSTM용 시퀀스 데이터 준비
-            self.X_train_seq = self.create_sequences(self.X_train)
-            self.X_test_seq = self.create_sequences(self.X_test)
-            self.y_train_seq = self.y_train[self.sequence_length:]
-            self.y_test_seq = self.y_test[self.sequence_length:]
+            # 선형 회귀용 타겟 (다음 날의 종가 변화율)
+            train_returns = train_data['Close'].pct_change().shift(-1).iloc[:-1]
+            test_returns = test_data['Close'].pct_change().shift(-1).iloc[:-1]
+            
+            # 회귀 데이터 준비
+            self.X_train_reg = X_train_poly[:-1]  # 마지막 행 제외
+            self.X_test_reg = X_test_poly[:-1]    # 마지막 행 제외
+            self.y_train_reg = train_returns.dropna()
+            self.y_test_reg = test_returns.dropna()
+            
+            # 데이터 길이 확인 및 조정
+            min_train_len = min(len(self.X_train_reg), len(self.y_train_reg))
+            min_test_len = min(len(self.X_test_reg), len(self.y_test_reg))
+            
+            self.X_train_reg = self.X_train_reg[:min_train_len]
+            self.y_train_reg = self.y_train_reg[:min_train_len]
+            self.X_test_reg = self.X_test_reg[:min_test_len]
+            self.y_test_reg = self.y_test_reg[:min_test_len]
+            
+            # 데이터 준비 상태 확인
+            assert len(self.X_train_reg) == len(self.y_train_reg), "학습 데이터 길이 불일치"
+            assert len(self.X_test_reg) == len(self.y_test_reg), "테스트 데이터 길이 불일치"
+            
+            st.success("특성 준비가 완료되었습니다.")
+            return features
             
         except Exception as e:
-            st.error(f"데이터 준비 중 오류 발생: {str(e)}")
+            st.error(f"특성 준비 중 오류 발생: {str(e)}")
+            st.write("데이터 형태:", self.data.shape)
+            return None
     
-    def create_sequences(self, X):
+    def create_sequences(self, data):
         """LSTM을 위한 시퀀스 데이터 생성"""
         sequences = []
-        for i in range(len(X) - self.sequence_length):
-            sequences.append(X[i:(i + self.sequence_length)])
+        for i in range(len(data) - self.sequence_length):
+            sequences.append(data[i:(i + self.sequence_length)])
         return np.array(sequences)
     
-    def build_lstm_model(self):
-        """LSTM 모델 구축"""
-        model = Sequential([
-            LSTM(50, return_sequences=True, input_shape=(self.sequence_length, len(self.feature_names))),
-            Dropout(0.2),
-            LSTM(50),
-            Dropout(0.2),
-            Dense(1, activation='sigmoid')
-        ])
+    def calculate_model_probabilities(self):
+        """각 모델별 매수/매도/관망 확률 계산"""
+        try:
+            for name, model in self.models.items():
+                if name == 'LSTM':
+                    pred_proba = model.predict(self.X_test_seq, verbose=0)
+                elif name == 'Linear Regression':
+                    # 선형 회귀의 경우 예측값을 확률로 변환
+                    pred = model.predict(self.X_test_reg)
+                    
+                    # Min-Max 스케일링으로 0~1 범위로 변환
+                    pred_scaled = (pred - pred.min()) / (pred.max() - pred.min())
+                    pred_proba = pred_scaled
+                else:
+                    pred_proba = model.predict_proba(self.X_test_scaled)[:, 1]
+                
+                # dtype을 명시적으로 지정하여 경고 메시지 제거
+                signals = pd.Series(
+                    index=self.X_test.index[-len(pred_proba):],
+                    dtype='object'
+                )
+                
+                if name == 'Linear Regression':
+                    # 선형 회귀의 경우 변화율 기반으로 신호 생성
+                    signals.loc[pred > 0.01] = 'BUY'     # 1% 이상 상승 예측
+                    signals.loc[pred < -0.01] = 'SELL'   # 1% 이상 하락 예측
+                    signals.loc[(pred >= -0.01) & (pred <= 0.01)] = 'HOLD'
+                else:
+                    # 다른 모델들의 경우 확률 기반으로 신호 생성
+                    signals.loc[pred_proba > 0.66] = 'BUY'
+                    signals.loc[pred_proba < 0.33] = 'SELL'
+                    signals.loc[(pred_proba >= 0.33) & (pred_proba <= 0.66)] = 'HOLD'
+                
+                self.predictions[name] = signals
+                
+                # 신호별 확률 계산
+                total_signals = len(signals)
+                signal_counts = signals.value_counts()
+                
+                self.signal_probabilities[name] = {
+                    'BUY': signal_counts.get('BUY', 0) / total_signals * 100,
+                    'SELL': signal_counts.get('SELL', 0) / total_signals * 100,
+                    'HOLD': signal_counts.get('HOLD', 0) / total_signals * 100
+                }
+                
+        except Exception as e:
+            st.error(f"확률 계산 중 오류 발생: {str(e)}")
+            return False
         
-        model.compile(
-            optimizer=Adam(learning_rate=0.001),
-            loss='binary_crossentropy',
-            metrics=['accuracy']
-        )
-        
-        return model
-    
-    def train_models(self):
+        return True
+
+    def train_all_models(self):
         """모든 모델 학습"""
         try:
-            # Random Forest
-            rf_model = RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
-                random_state=42
-            )
-            rf_model.fit(self.X_train, self.y_train)
-            self.models['Random Forest'] = rf_model
-            self.predictions['Random Forest'] = rf_model.predict(self.X_test)
-            self.feature_importance['Random Forest'] = pd.Series(
-                rf_model.feature_importances_,
-                index=self.feature_names
-            ).sort_values(ascending=False)
+            features = self.prepare_features()
+            if features is None:
+                return False
             
-            # 선형 회귀
-            lr_model = LinearRegression()
-            lr_model.fit(self.X_train, self.y_train)
-            self.models['Linear'] = lr_model
-            self.predictions['Linear'] = lr_model.predict(self.X_test)
-            self.feature_importance['Linear'] = pd.Series(
-                np.abs(lr_model.coef_),
-                index=self.feature_names
-            ).sort_values(ascending=False)
+            # 선형 회귀 모델 학습
+            try:
+                linear_model = LinearRegression()
+                linear_model.fit(self.X_train_reg, self.y_train_reg)
+                self.models['Linear Regression'] = linear_model
+                
+                # 선형 회귀 예측을 신호로 변환
+                y_pred_reg = linear_model.predict(self.X_test_reg)
+                signals = pd.Series(index=self.y_test_reg.index, dtype='object')
+                
+                # 변화율에 따른 신호 생성
+                signals.loc[y_pred_reg > 0.01] = 'BUY'    # 1% 이상 상승 예측
+                signals.loc[y_pred_reg < -0.01] = 'SELL'  # 1% 이상 하락 예측
+                signals.loc[(y_pred_reg >= -0.01) & (y_pred_reg <= 0.01)] = 'HOLD'
+                
+                self.predictions['Linear Regression'] = signals
+                
+            except Exception as e:
+                st.warning(f"선형 회귀 모델 학습 중 오류 발생: {str(e)}")
+                
+            # Random Forest
+            rf_model = RandomForestClassifier(
+                n_estimators=100, 
+                random_state=42,
+                class_weight='balanced'
+            )
+            rf_model.fit(self.X_train_scaled, self.y_train)
+            self.models['Random Forest'] = rf_model
             
             # XGBoost
-            xgb_model = XGBRegressor(
-                n_estimators=100,
-                learning_rate=0.1,
-                max_depth=5,
-                random_state=42
-            )
-            xgb_model.fit(self.X_train, self.y_train)
-            self.models['XGBoost'] = xgb_model
-            self.predictions['XGBoost'] = xgb_model.predict(self.X_test)
-            self.feature_importance['XGBoost'] = pd.Series(
-                xgb_model.feature_importances_,
-                index=self.feature_names
-            ).sort_values(ascending=False)
+            if XGBOOST_AVAILABLE:
+                xgb_model = XGBClassifier(
+                    n_estimators=100,
+                    max_depth=3,
+                    learning_rate=0.1,
+                    random_state=42,
+                    scale_pos_weight=1
+                )
+                xgb_model.fit(self.X_train_scaled, self.y_train)
+                self.models['XGBoost'] = xgb_model
             
-            # LightGBM
-            lgb_model = LGBMRegressor(
-                n_estimators=100,
-                learning_rate=0.1,
-                num_leaves=31,
-                random_state=42
-            )
-            lgb_model.fit(self.X_train, self.y_train)
-            self.models['LightGBM'] = lgb_model
-            self.predictions['LightGBM'] = lgb_model.predict(self.X_test)
-            self.feature_importance['LightGBM'] = pd.Series(
-                lgb_model.feature_importances_,
-                index=self.feature_names
-            ).sort_values(ascending=False)
+            # LightGBM - 파라미터 수정
+            if LIGHTGBM_AVAILABLE:
+                # 경고 메시지 임시 비활성화
+                import warnings
+                warnings.filterwarnings('ignore', category=UserWarning)
+                warnings.filterwarnings('ignore', category=FutureWarning)
+                
+                lgb_model = LGBMClassifier(
+                    n_estimators=1000,  # 증가된 트리 수
+                    num_leaves=15,      # 감소된 잎 노드 수
+                    max_depth=4,        # 감소된 트리 깊이
+                    learning_rate=0.05, # 감소된 학습률
+                    min_child_samples=5,  # 감소된 최소 샘플 수
+                    min_child_weight=1,  # 증가된 최소 가중치
+                    min_split_gain=0.1,  # 증가된 분할 임계값
+                    subsample=0.8,
+                    colsample_bytree=0.8,
+                    random_state=42,
+                    class_weight='balanced',
+                    force_col_wise=True  # 컬럼 방식 멀티스레딩 강제
+                )
+                
+                # 검증 세트 분리
+                X_train_lgb, X_val_lgb, y_train_lgb, y_val_lgb = train_test_split(
+                    self.X_train_scaled,
+                    self.y_train,
+                    test_size=0.2,
+                    random_state=42,
+                    stratify=self.y_train  # 클래스 비율 유지
+                )
+                
+                # 모델 학습
+                try:
+                    lgb_model.fit(
+                        X_train_lgb,
+                        y_train_lgb,
+                        eval_set=[(X_val_lgb, y_val_lgb)],
+                        eval_metric='auc',  # 변경된 평가 메트릭
+                        callbacks=[
+                            lgb.early_stopping(stopping_rounds=50),  # 증가된 조기 종료 라운드
+                            lgb.log_evaluation(period=0)
+                        ]
+                    )
+                    
+                    self.models['LightGBM'] = lgb_model
+                    
+                except Exception as e:
+                    st.warning(f"LightGBM 학습 중 오류 발생: {str(e)}")
+                    st.info("다른 모델들로 계속 진행합니다.")
+                
+                # 경고 메시지 다시 활성화
+                warnings.resetwarnings()
             
-            # LSTM
-            lstm_model = self.build_lstm_model()
-            early_stopping = EarlyStopping(
-                monitor='val_loss',
-                patience=5,
-                restore_best_weights=True
-            )
+            # LSTM 모델 수정
+            try:
+                input_shape = (self.sequence_length, len(features))
+                inputs = Input(shape=input_shape)
+                
+                # LSTM 레이어 구성 수정
+                x = LSTM(64, return_sequences=True, 
+                        kernel_initializer='glorot_uniform',
+                        recurrent_initializer='orthogonal')(inputs)
+                x = BatchNormalization()(x)
+                x = Dropout(0.3)(x)
+                
+                x = LSTM(32, 
+                        kernel_initializer='glorot_uniform',
+                        recurrent_initializer='orthogonal')(x)
+                x = BatchNormalization()(x)
+                x = Dropout(0.3)(x)
+                
+                x = Dense(16, activation='relu')(x)
+                x = BatchNormalization()(x)
+                outputs = Dense(1, activation='sigmoid')(x)
+                
+                lstm_model = Model(inputs=inputs, outputs=outputs)
+                
+                # 컴파일 설정 수정
+                optimizer = Adam(
+                    learning_rate=0.001,
+                    clipnorm=1.0  # 그래디언트 클리핑 추가
+                )
+                
+                lstm_model.compile(
+                    optimizer=optimizer,
+                    loss='binary_crossentropy',
+                    metrics=['accuracy']
+                )
+                
+                # 클래스 가중치 계산
+                class_weights = compute_class_weight(
+                    'balanced',
+                    classes=np.unique(self.y_train_seq),
+                    y=self.y_train_seq
+                )
+                class_weight_dict = dict(enumerate(class_weights))
+                
+                # Early Stopping 콜백 추가
+                early_stopping = EarlyStopping(
+                    monitor='loss',
+                    patience=5,
+                    restore_best_weights=True
+                )
+                
+                # 모델 학습
+                lstm_model.fit(
+                    self.X_train_seq, 
+                    self.y_train_seq,
+                    epochs=50, 
+                    batch_size=32,
+                    class_weight=class_weight_dict,
+                    callbacks=[early_stopping],
+                    validation_split=0.2,
+                    verbose=0
+                )
+                
+                self.models['LSTM'] = lstm_model
+                
+            except Exception as e:
+                st.warning(f"LSTM 학습 중 오류 발생: {str(e)}")
+                st.info("다른 모델들로 계속 진행합니다.")
             
-            history = lstm_model.fit(
-                self.X_train_seq,
-                self.y_train_seq,
-                epochs=50,
-                batch_size=32,
-                validation_split=0.2,
-                callbacks=[early_stopping],
-                verbose=0
-            )
-            
-            self.models['LSTM'] = lstm_model
-            self.predictions['LSTM'] = lstm_model.predict(self.X_test_seq).flatten()
-            
-            # 학습 결과 요약
-            st.success("모든 모델 학습 완료!")
-            st.write("### 모델별 학습 완료 상태")
-            for model_name in self.models.keys():
-                st.write(f"✅ {model_name}")
-            
-            return True
+            return self.calculate_model_probabilities()
             
         except Exception as e:
             st.error(f"모델 학습 중 오류 발생: {str(e)}")
@@ -808,177 +998,284 @@ class ProbabilisticAnalyzer:
     def compare_models(self):
         """모델 성능 비교 분석"""
         try:
-            metrics = {}
+            # 모델별 성능 지표 저장
+            performance_metrics = {}
             
-            for name, predictions in self.predictions.items():
-                # LSTM과 다른 모델들의 데이터 길이 맞추기
-                if name == 'LSTM':
-                    y_true = self.y_test_seq
-                    predictions = predictions[-len(y_true):]  # 예측값 길이 조정
+            for name, model in self.models.items():
+                metrics = {}
+                
+                if name == 'Linear Regression':
+                    # 선형 회귀 모델의 성능 지표
+                    y_pred = model.predict(self.X_test_reg)
+                    metrics['R2'] = r2_score(self.y_test_reg, y_pred)
+                    metrics['MAE'] = mean_absolute_error(self.y_test_reg, y_pred)
+                    metrics['RMSE'] = np.sqrt(mean_squared_error(self.y_test_reg, y_pred))
+                    
+                    # 방향성 예측 정확도 계산
+                    direction_accuracy = np.mean(
+                        (y_pred > 0) == (self.y_test_reg > 0)
+                    ) * 100
+                    metrics['방향성 정확도'] = direction_accuracy
+                    
+                elif name == 'LSTM':
+                    # LSTM 모델의 성능 지표
+                    y_pred = (model.predict(self.X_test_seq) > 0.5).astype(int)
+                    metrics['정확도'] = accuracy_score(self.y_test_seq, y_pred)
+                    metrics['정밀도'] = precision_score(self.y_test_seq, y_pred)
+                    metrics['재현율'] = recall_score(self.y_test_seq, y_pred)
+                    metrics['F1 점수'] = f1_score(self.y_test_seq, y_pred)
+                    
                 else:
-                    y_true = self.y_test[-len(self.y_test_seq):]  # 테스트 데이터 길이 조정
-                    predictions = predictions[-len(self.y_test_seq):]  # 예측값 길이 조정
+                    # 분류 모델들의 성능 지표
+                    y_pred = model.predict(self.X_test_scaled)
+                    metrics['정확도'] = accuracy_score(self.y_test, y_pred)
+                    metrics['정밀도'] = precision_score(self.y_test, y_pred)
+                    metrics['재현율'] = recall_score(self.y_test, y_pred)
+                    metrics['F1 점수'] = f1_score(self.y_test, y_pred)
                 
-                # 회귀 지표
-                mse = mean_squared_error(y_true, predictions)
-                rmse = np.sqrt(mse)
-                mae = mean_absolute_error(y_true, predictions)
-                r2 = r2_score(y_true, predictions)
-                
-                metrics[name] = {
-                    'MSE': mse,
-                    'RMSE': rmse,
-                    'MAE': mae,
-                    'R2 Score': r2
-                }
+                performance_metrics[name] = metrics
             
-            # 결과를 DataFrame으로 변환
-            metrics_df = pd.DataFrame(metrics).T
+            # 성능 지표 시각화
+            st.write("### 모델별 성능 비교")
             
-            # 결과 표시
-            st.write("### 모델별 성능 지표")
-            st.dataframe(metrics_df.style.format({
-                'MSE': '{:.6f}',
-                'RMSE': '{:.6f}',
-                'MAE': '{:.6f}',
-                'R2 Score': '{:.6f}'
-            }))
+            # 1. 성능 지표 테이블
+            metrics_df = pd.DataFrame(performance_metrics).round(4)
+            st.dataframe(
+                metrics_df.style.background_gradient(cmap='YlOrRd')
+            )
             
-            # 성능 비교 시각화
+            # 2. 모델별 주요 지표 시각화
             fig = go.Figure()
             
-            for metric in metrics_df.columns:
-                fig.add_trace(go.Bar(
-                    name=metric,
-                    x=metrics_df.index,
-                    y=metrics_df[metric],
-                    text=metrics_df[metric].round(4),
-                    textposition='auto',
-                ))
+            for name, metrics in performance_metrics.items():
+                if name == 'Linear Regression':
+                    # 선형 회귀 모델은 방향성 정확도만 표시
+                    fig.add_trace(
+                        go.Bar(
+                            name=name,
+                            x=['방향성 정확도'],
+                            y=[metrics['방향성 정확도']],
+                            text=[f"{metrics['방향성 정확도']:.2f}%"],
+                            textposition='auto'
+                        )
+                    )
+                else:
+                    # 다른 모델들은 정확도와 F1 점수 표시
+                    fig.add_trace(
+                        go.Bar(
+                            name=name,
+                            x=['정확도', 'F1 점수'],
+                            y=[metrics['정확도'], metrics['F1 점수']],
+                            text=[f"{metrics['정확도']:.2f}", f"{metrics['F1 점수']:.2f}"],
+                            textposition='auto'
+                        )
+                    )
             
             fig.update_layout(
-                title='모델별 성능 지표 비교',
+                title='모델별 주요 성능 지표',
+                xaxis_title='지표',
+                yaxis_title='점수',
                 barmode='group',
                 height=500
             )
+            
             st.plotly_chart(fig)
             
-            # 예측값 vs 실제값 산점도
-            for name, predictions in self.predictions.items():
-                if name == 'LSTM':
-                    y_true = self.y_test_seq
-                    pred = predictions[-len(y_true):]
+            # 3. 모델 순위 계산
+            model_ranks = {}
+            for name, metrics in performance_metrics.items():
+                if name == 'Linear Regression':
+                    model_ranks[name] = metrics['방향성 정확도']
                 else:
-                    y_true = self.y_test[-len(self.y_test_seq):]
-                    pred = predictions[-len(self.y_test_seq):]
-                
-                fig = px.scatter(
-                    x=y_true,
-                    y=pred,
-                    title=f'{name} - 예측값 vs 실제값',
-                    labels={'x': '실제값', 'y': '예측값'}
+                    # 정확도와 F1 점수의 평균으로 순위 계산
+                    model_ranks[name] = (metrics['정확도'] + metrics['F1 점수']) / 2
+            
+            ranks_df = pd.DataFrame(
+                model_ranks.items(), 
+                columns=['모델', '종합 점수']
+            ).sort_values('종합 점수', ascending=False)
+            
+            st.write("### 모델 순위")
+            st.dataframe(
+                ranks_df.style.background_gradient(
+                    cmap='YlOrRd',
+                    subset=['종합 점수']
                 )
+            )
+            
+            return performance_metrics
+            
+        except Exception as e:
+            st.error(f"모델 비교 분석 중 오류 발생: {str(e)}")
+            return None
+
+    def plot_feature_importance(self):
+        """특성 중요도 시각화"""
+        try:
+            st.write("### 모델별 특성 중요도 분석")
+            
+            for name, model in self.models.items():
+                if name == 'Linear Regression':
+                    # 선형 회귀 계수의 절대값을 중요도로 사용
+                    feature_names = self.poly_features.get_feature_names_out(self.X_train.columns)
+                    importance = np.abs(model.coef_)
+                    
+                elif name == 'LSTM':
+                    # LSTM은 특성 중요도 계산 생략
+                    continue
+                    
+                elif name in ['Random Forest', 'XGBoost', 'LightGBM']:
+                    # 트리 기반 모델의 특성 중요도
+                    feature_names = self.X_train.columns
+                    if hasattr(model, 'feature_importances_'):
+                        importance = model.feature_importances_
+                    else:
+                        continue
+                else:
+                    continue
                 
-                # 이상적인 예측선 추가
-                min_val = min(y_true.min(), pred.min())
-                max_val = max(y_true.max(), pred.max())
+                # 특성 중요도 데이터프레임 생성
+                importance_df = pd.DataFrame({
+                    'Feature': feature_names,
+                    'Importance': importance
+                })
+                
+                # 중요도 기준 정렬
+                importance_df = importance_df.sort_values(
+                    'Importance', 
+                    ascending=False
+                ).reset_index(drop=True)
+                
+                # 상위 15개 특성만 선택
+                importance_df = importance_df.head(15)
+                
+                # 특성 중요도 시각화
+                fig = go.Figure()
+                
                 fig.add_trace(
-                    go.Scatter(
-                        x=[min_val, max_val],
-                        y=[min_val, max_val],
-                        mode='lines',
-                        name='이상적인 예측',
-                        line=dict(dash='dash', color='red')
+                    go.Bar(
+                        x=importance_df['Importance'],
+                        y=importance_df['Feature'],
+                        orientation='h',
+                        marker=dict(
+                            color=importance_df['Importance'],
+                            colorscale='YlOrRd'
+                        )
                     )
                 )
                 
                 fig.update_layout(
-                    xaxis_title='실제값',
-                    yaxis_title='예측값',
-                    height=500
-                )
-                st.plotly_chart(fig)
-            
-            return metrics_df
-            
-        except Exception as e:
-            st.error(f"모델 비교 분석 중 오류 발생: {str(e)}")
-            return pd.DataFrame()
-    
-    def plot_feature_importance(self):
-        """특성 중요도 시각화"""
-        try:
-            if not self.feature_importance:
-                st.warning("특성 중요도 정보가 없습니다.")
-                return
-            
-            for name, importance in self.feature_importance.items():
-                top_features = importance.head(10)
-                
-                fig = px.bar(
-                    x=top_features.values,
-                    y=top_features.index,
-                    orientation='h',
-                    title=f'{name} 모델의 상위 10개 중요 특성'
-                )
-                
-                fig.update_layout(
+                    title=f'{name} 모델의 특성 중요도',
                     xaxis_title='중요도',
                     yaxis_title='특성',
-                    height=400
+                    height=600,
+                    yaxis=dict(autorange="reversed")
                 )
                 
                 st.plotly_chart(fig)
                 
+                # 특성 중요도 테이블
+                st.write(f"#### {name} 모델의 특성 중요도 상세")
+                st.dataframe(
+                    importance_df.style.background_gradient(
+                        cmap='YlOrRd',
+                        subset=['Importance']
+                    )
+                )
+                
+                # 특성 간 상관관계 분석
+                if name == 'Linear Regression':
+                    st.write("#### 주요 특성 간 상관관계")
+                    top_features = importance_df['Feature'].head(10).tolist()
+                    
+                    # 다항식 특성의 경우 원본 특성만 선택
+                    original_features = [f for f in self.X_train.columns if f in top_features]
+                    
+                    if original_features:
+                        corr_matrix = self.X_train[original_features].corr()
+                        
+                        fig = go.Figure(data=go.Heatmap(
+                            z=corr_matrix.values,
+                            x=corr_matrix.columns,
+                            y=corr_matrix.columns,
+                            colorscale='RdBu',
+                            zmin=-1,
+                            zmax=1
+                        ))
+                        
+                        fig.update_layout(
+                            title='주요 특성 간 상관관계',
+                            height=600,
+                            width=800
+                        )
+                        
+                        st.plotly_chart(fig)
+            
         except Exception as e:
-            st.error(f"특성 중요도 시각화 중 오류 발생: {str(e)}")
+            st.error(f"특성 중요도 분석 중 오류 발생: {str(e)}")
 
     def plot_roc_curves(self):
         """모델별 ROC 곡선 시각화"""
         try:
+            st.write("### 모델별 ROC 곡선 비교")
+            
             fig = go.Figure()
+            auc_scores = {}
             
-            for name, predictions in self.predictions.items():
-                # LSTM과 다른 모델들의 데이터 길이 맞추기
-                if name == 'LSTM':
-                    y_true = self.y_test_seq
-                    pred = predictions[-len(y_true):]
-                else:
-                    y_true = self.y_test[-len(self.y_test_seq):]
-                    pred = predictions[-len(self.y_test_seq):]
-                
-                # ROC 곡선 계산
-                fpr, tpr, _ = roc_curve(y_true, pred)
-                auc_score = roc_auc_score(y_true, pred)
-                
-                # ROC 곡선 추가
-                fig.add_trace(
-                    go.Scatter(
-                        x=fpr,
-                        y=tpr,
-                        name=f'{name} (AUC = {auc_score:.3f})',
-                        mode='lines'
-                    )
-                )
-            
-            # 대각선 추가 (랜덤 예측 기준선)
+            # Random classifier 기준선
             fig.add_trace(
                 go.Scatter(
                     x=[0, 1],
                     y=[0, 1],
-                    name='Random',
-                    mode='lines',
-                    line=dict(dash='dash', color='gray')
+                    line=dict(dash='dash', color='gray'),
+                    name='Random Classifier'
                 )
             )
             
-            # 레이아웃 설정
+            for name, model in self.models.items():
+                try:
+                    if name == 'Linear Regression':
+                        # 선형 회귀의 경우 예측값을 이진 분류로 변환
+                        y_pred = model.predict(self.X_test_reg)
+                        y_true = (self.y_test_reg > 0).astype(int)
+                        y_score = (y_pred - y_pred.min()) / (y_pred.max() - y_pred.min())
+                        
+                    elif name == 'LSTM':
+                        # LSTM의 경우 예측 확률 직접 사용
+                        y_true = self.y_test_seq
+                        y_score = model.predict(self.X_test_seq).ravel()
+                        
+                    else:
+                        # 다른 분류 모델들
+                        y_true = self.y_test
+                        y_score = model.predict_proba(self.X_test_scaled)[:, 1]
+                    
+                    # ROC 곡선 계산
+                    fpr, tpr, _ = roc_curve(y_true, y_score)
+                    auc_score = auc(fpr, tpr)
+                    auc_scores[name] = auc_score
+                    
+                    # ROC 곡선 추가
+                    fig.add_trace(
+                        go.Scatter(
+                            x=fpr,
+                            y=tpr,
+                            name=f'{name} (AUC = {auc_score:.3f})',
+                            mode='lines'
+                        )
+                    )
+                    
+                except Exception as model_error:
+                    st.warning(f"{name} 모델의 ROC 곡선을 생성할 수 없습니다: {str(model_error)}")
+                    continue
+            
+            # 그래프 레이아웃 설정
             fig.update_layout(
-                title='ROC 곡선 비교',
+                title='ROC Curves Comparison',
                 xaxis_title='False Positive Rate',
                 yaxis_title='True Positive Rate',
-                width=700,
-                height=500,
+                height=600,
+                width=800,
                 showlegend=True,
                 legend=dict(
                     yanchor="bottom",
@@ -988,41 +1285,313 @@ class ProbabilisticAnalyzer:
                 )
             )
             
+            # 그리드 추가
+            fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+            fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='LightGray')
+            
             st.plotly_chart(fig)
             
-            # AUC 점수 표 추가
-            auc_scores = {}
-            for name, predictions in self.predictions.items():
-                if name == 'LSTM':
-                    y_true = self.y_test_seq
-                    pred = predictions[-len(y_true):]
-                else:
-                    y_true = self.y_test[-len(self.y_test_seq):]
-                    pred = predictions[-len(self.y_test_seq):]
+            # AUC 점수 테이블
+            if auc_scores:
+                st.write("### AUC 점수 비교")
+                auc_df = pd.DataFrame(
+                    auc_scores.items(),
+                    columns=['모델', 'AUC 점수']
+                ).sort_values('AUC 점수', ascending=False)
                 
-                auc_scores[name] = roc_auc_score(y_true, pred)
-            
-            auc_df = pd.DataFrame.from_dict(auc_scores, orient='index', columns=['AUC Score'])
-            st.write("### AUC 점수 비교")
-            st.dataframe(auc_df.style.format({'AUC Score': '{:.4f}'}))
-            
-            # 최고 성능 모델 하이라이트
-            best_model = auc_df['AUC Score'].idxmax()
-            st.success(f"🏆 최고 성능 모델: {best_model} (AUC = {auc_df.loc[best_model, 'AUC Score']:.4f})")
+                st.dataframe(
+                    auc_df.style.background_gradient(
+                        cmap='YlOrRd',
+                        subset=['AUC 점수']
+                    ).format({'AUC 점수': '{:.4f}'})
+                )
             
         except Exception as e:
-            st.error(f"ROC 곡선 시각화 중 오류 발생: {str(e)}")
-            st.info("""
-            ROC 곡선 생성 실패 원인:
-            1. 데이터 형식 불일치
-            2. 예측값 범위 문제
-            3. 클래스 불균형
+            st.error(f"ROC 곡선 생성 중 오류 발생: {str(e)}")
+            st.info("일부 모델에서 ROC 곡선을 생성할 수 없습니다.")
+
+class ModelSignalAnalyzer:
+    def __init__(self, models, data, predictions):
+        self.models = models
+        self.data = data
+        self.predictions = predictions
+        self.performance_metrics = {}
+        self.returns = self.data['Close'].pct_change().fillna(0)  # NaN 값을 0으로 처리
+        
+    def analyze_signals(self):
+        """모델별 매매 신호 분석"""
+        try:
+            signal_metrics = {}
             
-            해결 방안:
-            1. 데이터 전처리 확인
-            2. 예측값 정규화 검토
-            3. 클래스 균형 조정
-            """)
+            for name, signals in self.predictions.items():
+                # 매매 포지션 초기화
+                positions = pd.Series(0, index=signals.index)
+                positions[signals == 'BUY'] = 1
+                positions[signals == 'SELL'] = -1
+                
+                # 해당 기간의 수익률 계산
+                period_returns = self.returns[signals.index]
+                strategy_returns = positions * period_returns
+                
+                # 누적 수익률 계산
+                cumulative_returns = (1 + strategy_returns).cumprod()
+                
+                # 성과 지표 계산
+                total_return = cumulative_returns.iloc[-1] - 1
+                sharpe_ratio = np.sqrt(252) * strategy_returns.mean() / strategy_returns.std()
+                max_drawdown = (cumulative_returns / cumulative_returns.cummax() - 1).min()
+                win_rate = len(strategy_returns[strategy_returns > 0]) / len(strategy_returns)
+                
+                # 매매 신호 통계
+                signal_counts = signals.value_counts()
+                total_signals = len(signals)
+                
+                metrics = {
+                    '누적 수익률': total_return,
+                    '샤프 비율': sharpe_ratio,
+                    '최대 낙폭': max_drawdown,
+                    '승률': win_rate,
+                    '매수 신호 비율': signal_counts.get('BUY', 0) / total_signals,
+                    '매도 신호 비율': signal_counts.get('SELL', 0) / total_signals,
+                    '관망 신호 비율': signal_counts.get('HOLD', 0) / total_signals,
+                    '총 거래 횟수': len(positions[positions != 0])
+                }
+                
+                signal_metrics[name] = metrics
+                
+                # 수익률 곡선 시각화
+                fig = go.Figure()
+                
+                fig.add_trace(go.Scatter(
+                    x=cumulative_returns.index,
+                    y=cumulative_returns,
+                    mode='lines',
+                    name=f'{name} 전략 수익률',
+                    line=dict(width=2)
+                ))
+                
+                fig.update_layout(
+                    title=f'{name} 모델의 누적 수익률',
+                    xaxis_title='날짜',
+                    yaxis_title='누적 수익률',
+                    height=500
+                )
+                
+                st.plotly_chart(fig)
+                
+                # 성과 지표 표시
+                metrics_df = pd.DataFrame([metrics]).T
+                metrics_df.columns = ['값']
+                
+                # 성과 지표 포맷팅
+                formatted_metrics = metrics_df.copy()
+                formatted_metrics.loc['누적 수익률', '값'] = f"{metrics['누적 수익률']*100:.2f}%"
+                formatted_metrics.loc['샤프 비율', '값'] = f"{metrics['샤프 비율']:.2f}"
+                formatted_metrics.loc['최대 낙폭', '값'] = f"{metrics['최대 낙폭']*100:.2f}%"
+                formatted_metrics.loc['승률', '값'] = f"{metrics['승률']*100:.2f}%"
+                formatted_metrics.loc['매수 신호 비율', '값'] = f"{metrics['매수 신호 비율']*100:.2f}%"
+                formatted_metrics.loc['매도 신호 비율', '값'] = f"{metrics['매도 신호 비율']*100:.2f}%"
+                formatted_metrics.loc['관망 신호 비율', '값'] = f"{metrics['관망 신호 비율']*100:.2f}%"
+                formatted_metrics.loc['총 거래 횟수', '값'] = f"{metrics['총 거래 횟수']}"
+                
+                st.write(f"### {name} 모델 성과 지표")
+                st.dataframe(formatted_metrics)
+                
+                # 매매 신호 분포 시각화
+                fig_signals = go.Figure(data=[
+                    go.Pie(
+                        labels=['매수', '매도', '관망'],
+                        values=[
+                            metrics['매수 신호 비율'],
+                            metrics['매도 신호 비율'],
+                            metrics['관망 신호 비율']
+                        ],
+                        hole=.3
+                    )
+                ])
+                
+                fig_signals.update_layout(
+                    title=f'{name} 모델의 매매 신호 분포',
+                    height=400
+                )
+                
+                st.plotly_chart(fig_signals)
+            
+            return signal_metrics
+            
+        except Exception as e:
+            st.error(f"신호 분석 중 오류 발생: {str(e)}")
+            return None
+
+    def plot_model_comparison(self):
+        """모델 성능 비교 시각화"""
+        try:
+            # 모델별 성능 지표 계산
+            for name in self.predictions.keys():
+                # predictions가 Series인 경우 처리
+                if isinstance(self.predictions[name], pd.Series):
+                    signals = self.predictions[name]
+                else:
+                    # predictions가 다른 형태인 경우 Series로 변환
+                    signals = pd.Series(self.predictions[name])
+                
+                metrics = {}
+                
+                # 매매 포지션 초기화
+                positions = pd.Series(0, index=signals.index)
+                positions.loc[signals == 'BUY'] = 1
+                positions.loc[signals == 'SELL'] = -1
+                
+                # 해당 기간의 수익률 계산
+                period_returns = self.returns[signals.index]
+                strategy_returns = positions * period_returns
+                strategy_returns = strategy_returns.fillna(0)  # NaN 값 처리
+                
+                # 누적 수익률 계산
+                cumulative_returns = (1 + strategy_returns).cumprod()
+                
+                # 안전한 성과 지표 계산
+                try:
+                    # 누적 수익률
+                    if len(cumulative_returns) > 0:
+                        metrics['누적 수익률'] = float(cumulative_returns.iloc[-1] - 1)
+                    else:
+                        metrics['누적 수익률'] = 0.0
+                    
+                    # 평균 수익률
+                    metrics['평균 수익률'] = float(strategy_returns.mean()) if len(strategy_returns) > 0 else 0.0
+                    
+                    # 샤프 비율 계산
+                    returns_std = float(strategy_returns.std())
+                    returns_mean = float(strategy_returns.mean())
+                    
+                    if returns_std > 0 and not np.isnan(returns_std) and not np.isnan(returns_mean):
+                        metrics['샤프 비율'] = float(np.sqrt(252) * returns_mean / returns_std)
+                    else:
+                        metrics['샤프 비율'] = 0.0
+                    
+                    # 승률 계산
+                    positive_returns = strategy_returns[strategy_returns > 0]
+                    total_trades = len(strategy_returns[strategy_returns != 0])
+                    
+                    if total_trades > 0:
+                        metrics['승률'] = float(len(positive_returns) / total_trades)
+                    else:
+                        metrics['승률'] = 0.0
+                        
+                    # 최대 손실/수익
+                    metrics['최대 손실'] = float(strategy_returns.min()) if len(strategy_returns) > 0 else 0.0
+                    metrics['최대 수익'] = float(strategy_returns.max()) if len(strategy_returns) > 0 else 0.0
+                    
+                except Exception as calc_error:
+                    st.warning(f"{name} 모델의 성과 지표 계산 중 오류 발생: {str(calc_error)}")
+                    metrics = {
+                        '누적 수익률': 0.0,
+                        '평균 수익률': 0.0,
+                        '샤프 비율': 0.0,
+                        '승률': 0.0,
+                        '최대 손실': 0.0,
+                        '최대 수익': 0.0
+                    }
+                
+                # NaN 체크 및 처리
+                for key in metrics:
+                    if np.isnan(metrics[key]) or np.isinf(metrics[key]):
+                        metrics[key] = 0.0
+                
+                self.performance_metrics[name] = metrics
+            
+            # 성능 지표 데이터프레임 생성
+            metrics_df = pd.DataFrame.from_dict(self.performance_metrics, orient='index')
+            
+            # NaN 값 처리
+            metrics_df = metrics_df.fillna(0.0)
+            
+            # 1. 누적 수익률 비교
+            fig1 = go.Figure()
+            for name in metrics_df.index:
+                fig1.add_trace(
+                    go.Bar(
+                        name=name,
+                        x=['누적 수익률'],
+                        y=[metrics_df.loc[name, '누적 수익률'] * 100],
+                        text=[f"{metrics_df.loc[name, '누적 수익률']*100:.2f}%"],
+                        textposition='auto'
+                    )
+                )
+            
+            fig1.update_layout(
+                title='모델별 누적 수익률 비교',
+                yaxis_title='수익률 (%)',
+                barmode='group',
+                height=500
+            )
+            
+            st.plotly_chart(fig1)
+            
+            # 2. 성능 지표 포맷팅 및 표시
+            formatted_metrics = metrics_df.copy()
+            formatted_metrics['누적 수익률'] = formatted_metrics['누적 수익률'].apply(lambda x: f"{x*100:.2f}%")
+            formatted_metrics['평균 수익률'] = formatted_metrics['평균 수익률'].apply(lambda x: f"{x*100:.2f}%")
+            formatted_metrics['승률'] = formatted_metrics['승률'].apply(lambda x: f"{x*100:.2f}%")
+            formatted_metrics['샤프 비율'] = formatted_metrics['샤프 비율'].apply(lambda x: f"{x:.2f}")
+            formatted_metrics['최대 손실'] = formatted_metrics['최대 손실'].apply(lambda x: f"{x*100:.2f}%")
+            formatted_metrics['최대 수익'] = formatted_metrics['최대 수익'].apply(lambda x: f"{x*100:.2f}%")
+            
+            st.write("### 모델별 성능 지표 비교")
+            st.dataframe(formatted_metrics)
+            
+            # 3. 승률과 샤프 비율 비교
+            fig2 = go.Figure()
+            for name in metrics_df.index:
+                fig2.add_trace(
+                    go.Scatter(
+                        x=[metrics_df.loc[name, '승률']],
+                        y=[metrics_df.loc[name, '샤프 비율']],
+                        mode='markers+text',
+                        name=name,
+                        text=[name],
+                        textposition="top center",
+                        marker=dict(size=15)
+                    )
+                )
+            
+            fig2.update_layout(
+                title='승률 vs 샤프 비율',
+                xaxis_title='승률',
+                yaxis_title='샤프 비율',
+                height=600,
+                showlegend=False
+            )
+            
+            st.plotly_chart(fig2)
+            
+            # 4. 모델 순위 계산 (0으로 나누기 방지)
+            metrics_df['종합 점수'] = (
+                metrics_df['누적 수익률'].fillna(0) * 0.4 +
+                metrics_df['승률'].fillna(0) * 0.3 +
+                (metrics_df['샤프 비율'].fillna(0) / 10) * 0.3
+            )
+            
+            ranks_df = pd.DataFrame({
+                '모델': metrics_df.index,
+                '종합 점수': metrics_df['종합 점수']
+            }).sort_values('종합 점수', ascending=False)
+            
+            st.write("### 모델 종합 순위")
+            st.dataframe(
+                ranks_df.style.background_gradient(
+                    cmap='YlOrRd',
+                    subset=['종합 점수']
+                ).format({'종합 점수': '{:.4f}'})
+            )
+            
+            return self.performance_metrics
+            
+        except Exception as e:
+            st.error(f"모델 비교 분석 중 오류 발생: {str(e)}")
+            st.write("Error details:", str(e))
+            return None
 
 # 메인 분석 부분 수정
 if st.sidebar.button("분석 시작"):
@@ -1038,7 +1607,7 @@ if st.sidebar.button("분석 시작"):
                 prob_analyzer = ProbabilisticAnalyzer(tech_analyzer.data)
                 
                 # 모델 학습
-                if prob_analyzer.train_models():
+                if prob_analyzer.train_all_models():
                     # 모델 성능 비교 분석
                     st.subheader("📊 모델 성능 비교 분석")
                     prob_analyzer.compare_models()
@@ -1051,14 +1620,67 @@ if st.sidebar.button("분석 시작"):
                     st.subheader("📉 ROC 곡선 분석")
                     prob_analyzer.plot_roc_curves()
                     
+                    # 모델별 매매 신호 분석
+                    st.subheader("🤖 모델별 매매 신호 분석")
+                    model_analyzer = ModelSignalAnalyzer(prob_analyzer.models, tech_analyzer.data, prob_analyzer.predictions)
+                    model_analyzer.analyze_signals()
+                    
+                    # 모델 비교 결과 표시
+                    fig, matrix_df = model_analyzer.plot_model_comparison()
+                    
+                    # 매트릭스 표시
+                    st.write("### 모델별 매매 신호 확률")
+                    st.dataframe(matrix_df.style.apply(lambda x: ['background-color: #e6ffe6' if v == 'BUY'
+                                                                else 'background-color: #ffe6e6' if v == 'SELL'
+                                                                else 'background-color: #f2f2f2'
+                                                                for v in x], subset=['Current Signal']))
+                    
+                    # 히트맵 표시
+                    st.plotly_chart(fig)
+                    
+                    # 모델 앙상블 기반 최종 추천
+                    current_signals = matrix_df['Current Signal'].value_counts()
+                    st.write("### 모델 앙상블 기반 최종 추천")
+                    
+                    total_models = len(matrix_df)
+                    buy_strength = current_signals.get('BUY', 0) / total_models * 100
+                    sell_strength = current_signals.get('SELL', 0) / total_models * 100
+                    hold_strength = current_signals.get('HOLD', 0) / total_models * 100
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("매수 신호 강도", f"{buy_strength:.1f}%")
+                    with col2:
+                        st.metric("매도 신호 강도", f"{sell_strength:.1f}%")
+                    with col3:
+                        st.metric("관망 신호 강도", f"{hold_strength:.1f}%")
+                    
+                    # 가중치 기반 최종 추천
+                    weighted_signals = {}
+                    for _, row in matrix_df.iterrows():
+                        accuracy = float(row['Accuracy'].rstrip('%')) / 100
+                        signal = row['Current Signal']
+                        weighted_signals[signal] = weighted_signals.get(signal, 0) + accuracy
+                    
+                    max_signal = max(weighted_signals.items(), key=lambda x: x[1])
+                    total_weight = sum(weighted_signals.values())
+                    confidence = (max_signal[1] / total_weight) * 100
+                    
+                    signal_color = {
+                        'BUY': 'green',
+                        'SELL': 'red',
+                        'HOLD': 'blue'
+                    }
+                    
+                    st.markdown(f"### 가중치 기반 최종 추천: "
+                              f"<span style='color: {signal_color[max_signal[0]]}'>{max_signal[0]}</span> "
+                              f"(신뢰도: {confidence:.1f}%)", unsafe_allow_html=True)
+                    
+                    # 선형 회귀 분석 결과 시각화
+                    prob_analyzer.plot_regression_analysis()
+                    
             except Exception as e:
                 st.error(f"분석 중 오류 발생: {str(e)}")
-                st.info("""
-                오류 해결을 위한 제안:
-                1. 데이터 형식 확인
-                2. 충분한 학습 데이터 확보
-                3. 모델 파라미터 조정
-                """)
     else:
         st.error(
             "데이터를 불러오는데 실패했습니다. "
