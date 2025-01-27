@@ -117,31 +117,6 @@ st.markdown("""
    - RSI와 유사하나 거래량 반영으로 더 정확
    - 다이버전스 발생 시 추세 전환 신호
 
-#### 재무 지표 설명
-1. **시가총액 (Market Cap)**
-   - 기업의 전체 가치
-   - 발행주식수 × 현재주가
-
-2. **PER (Price to Earnings Ratio)**
-   - 주가수익비율 = 주가/주당순이익
-   - 수익 대비 주가 수준 평가
-   - 산업 평균과 비교하여 판단
-
-3. **PSR (Price to Sales Ratio)**
-   - 주가매출비율 = 시가총액/매출액
-   - 매출액 대비 기업가치 평가
-   - 성장주 분석에 유용
-
-4. **PBR (Price to Book Ratio)**
-   - 주가순자산비율 = 시가총액/순자산
-   - 자산가치 대비 주가 수준
-   - 1 이하면 청산가치 이하로 거래
-
-5. **배당수익률 (Dividend Yield)**
-   - 주가 대비 배당금 비율
-   - 안정적 수익 지표
-   - 고배당 = 가치주 특성
-
 ### 분석 전략
 1. **추세 분석**
    - SMA, MACD로 주요 추세 파악
@@ -154,10 +129,6 @@ st.markdown("""
 3. **거래량 분석**
    - VWAP으로 기관 매매 동향 파악
    - MFI로 자금 흐름 강도 확인
-
-4. **재무 분석**
-   - 밸류에이션 지표로 기업가치 평가
-   - 산업 평균과 비교하여 적정가치 판단
 """)
 
 class AnalysisError(Exception):
@@ -332,10 +303,17 @@ def get_financial_metrics(ticker):
         info = ticker.info
         financials = ticker.financials
         balance_sheet = ticker.balance_sheet
+        cashflow = ticker.cashflow  # 현금흐름표 데이터 추가
         
         # 최신 재무제표 날짜 확인
         latest_financial_date = financials.columns[0].strftime('%Y-%m-%d') if not financials.empty else '날짜 없음'
         latest_balance_date = balance_sheet.columns[0].strftime('%Y-%m-%d') if not balance_sheet.empty else '날짜 없음'
+        latest_cashflow_date = cashflow.columns[0].strftime('%Y-%m-%d') if not cashflow.empty else '날짜 없음'
+        
+        # 현금흐름 관련 지표 추가
+        operating_cashflow = cashflow.loc['Operating Cash Flow'].iloc[0] if 'Operating Cash Flow' in cashflow.index else None
+        free_cashflow = cashflow.loc['Free Cash Flow'].iloc[0] if 'Free Cash Flow' in cashflow.index else None
+        capital_expenditure = cashflow.loc['Capital Expenditure'].iloc[0] if 'Capital Expenditure' in cashflow.index else None
         
         metrics = {
             'sector': info.get('sector', 'N/A'),  # 업종
@@ -347,9 +325,15 @@ def get_financial_metrics(ticker):
             'totalAssets': balance_sheet.loc['Total Assets'].iloc[0] if 'Total Assets' in balance_sheet.index else None,
             'currentAssets': balance_sheet.loc['Total Current Assets'].iloc[0] if 'Total Current Assets' in balance_sheet.index else None,
             'currentLiabilities': balance_sheet.loc['Total Current Liabilities'].iloc[0] if 'Total Current Liabilities' in balance_sheet.index else None,
+            'cashflow': {  # 현금흐름 정보 추가
+                'operating': operating_cashflow,
+                'free': free_cashflow,
+                'capex': capital_expenditure
+            },
             'dates': {
                 'financial': latest_financial_date,
-                'balance': latest_balance_date
+                'balance': latest_balance_date,
+                'cashflow': latest_cashflow_date
             }
         }
         
@@ -821,23 +805,6 @@ def main():
                         # 재무 종합 점수 계산
                         signals['fundamental'] = (roe_signal + per_signal + pbr_signal) / 3
                         
-                        st.sidebar.write("재무 지표 상세:")
-                        if roe is not None:
-                            st.sidebar.write(f"ROE: {roe:.2f}%")
-                            if roe > 15:
-                                st.sidebar.success("우수한 수익성")
-                            elif roe > 10:
-                                st.sidebar.info("양호한 수익성")
-                            elif roe > 5:
-                                st.sidebar.warning("보통 수익성")
-                            else:
-                                st.sidebar.error("저조한 수익성")
-                        else:
-                            st.sidebar.write("ROE: 데이터 없음")
-                        
-                        st.sidebar.write(f"PER: {per:.2f}" if per is not None else "PER: 데이터 없음")
-                        st.sidebar.write(f"PBR: {pbr:.2f}" if pbr is not None else "PBR: 데이터 없음")
-                        
                     except Exception as e:
                         st.warning(f"재무 데이터 분석 중 오류 발생: {str(e)}")
                         roe, per, pbr = None, None, None
@@ -940,42 +907,6 @@ def main():
                     """)
 
                 # 재무 지표 정보 표시
-                st.subheader("재무 지표 분석")
-                fundamental_info = probabilities['details']
-                
-                col1, col2, col3 = st.columns(3)
-                
-                with col1:
-                    if fundamental_info['roe'] is not None:
-                        st.metric("ROE", f"{fundamental_info['roe']:.2f}%")
-                        if fundamental_info['roe'] > 15:
-                            st.success("우수한 수익성")
-                        elif fundamental_info['roe'] > 10:
-                            st.info("양호한 수익성")
-                        else:
-                            st.warning("보통 수익성")
-                
-                with col2:
-                    if fundamental_info['per'] is not None:
-                        st.metric("PER", f"{fundamental_info['per']:.2f}")
-                        if fundamental_info['per'] < 10:
-                            st.success("저평가 구간")
-                        elif fundamental_info['per'] < 20:
-                            st.info("적정가 구간")
-                        else:
-                            st.warning("고평가 구간")
-                
-                with col3:
-                    if fundamental_info['pbr'] is not None:
-                        st.metric("PBR", f"{fundamental_info['pbr']:.2f}")
-                        if fundamental_info['pbr'] < 1:
-                            st.success("청산가치 이하")
-                        elif fundamental_info['pbr'] < 3:
-                            st.info("적정 수준")
-                        else:
-                            st.warning("고평가 구간")
-
-                # 기업 정보 및 재무 지표 표시
                 st.subheader("🏢 기업 정보 및 재무 지표")
                 
                 # 기업 기본 정보
@@ -1001,6 +932,7 @@ def main():
                 # 재무 비율 표시
                 st.markdown("#### 📈 주요 재무 비율")
                 col1, col2, col3, col4 = st.columns(4)
+                col5, col6, col7 = st.columns(3)  # 새로운 행 추가
                 
                 with col1:
                     if metrics['priceToSalesTrailing12Months'] is not None:
@@ -1045,35 +977,93 @@ def main():
                             st.info("안정적")
                         else:
                             st.warning("주의 필요")
-                
-                # 재무 비율 설명
-                with st.expander("📚 재무 비율 설명"):
-                    st.markdown("""
-                    ### 📊 주요 재무 비율 해석 가이드
+
+                # 새로운 재무 비율 추가
+                with col5:
+                    if probabilities['details']['per'] is not None:
+                        per = probabilities['details']['per']
+                        st.metric("📊 PER", f"{per:.2f}")
+                        if per < 10:
+                            st.success("저평가")
+                        elif per < 20:
+                            st.info("적정 수준")
+                        else:
+                            st.warning("고평가")
+
+                with col6:
+                    if probabilities['details']['pbr'] is not None:
+                        pbr = probabilities['details']['pbr']
+                        st.metric("📚 PBR", f"{pbr:.2f}")
+                        if pbr < 1:
+                            st.success("청산가치 이하")
+                        elif pbr < 3:
+                            st.info("적정 수준")
+                        else:
+                            st.warning("고평가")
+
+                with col7:
+                    if probabilities['details']['roe'] is not None:
+                        roe = probabilities['details']['roe']
+                        st.metric("💫 ROE", f"{roe:.2f}%")
+                        if roe > 15:
+                            st.success("수익성 우수")
+                        elif roe > 10:
+                            st.info("적정 수준")
+                        else:
+                            st.warning("수익성 저조")
+
+                # 현금흐름 정보 표시 (재무 비율 표시 다음에 추가)
+                if metrics and metrics.get('cashflow'):
+                    st.markdown("#### 💰 현금흐름 분석")
+                    cf_col1, cf_col2, cf_col3 = st.columns(3)
                     
-                    #### 💹 PSR (주가매출액비율)
-                    - 1 미만: 매출 대비 주가가 매우 저평가
-                    - 1~3: 일반적인 적정 수준
-                    - 3 이상: 고평가 영역
+                    with cf_col1:
+                        if metrics['cashflow']['operating'] is not None:
+                            operating_cf = metrics['cashflow']['operating']
+                            st.metric("영업현금흐름", format_number(operating_cf))
+                            if operating_cf > 0:
+                                st.success("양호한 영업활동")
+                            else:
+                                st.error("영업활동 주의")
                     
-                    #### 💰 배당수익률
-                    - 5% 이상: 고배당 주식
-                    - 2~5%: 적정 배당
-                    - 2% 미만: 저배당
+                    with cf_col2:
+                        if metrics['cashflow']['free'] is not None:
+                            free_cf = metrics['cashflow']['free']
+                            st.metric("잉여현금흐름", format_number(free_cf))
+                            if free_cf > 0:
+                                st.success("투자여력 있음")
+                            else:
+                                st.warning("투자여력 부족")
                     
-                    #### 🏦 부채비율
-                    - 100% 미만: 재무구조 우수
-                    - 100~200%: 보통 수준
-                    - 200% 이상: 재무구조 위험
-                    
-                    #### 💵 유동비율
-                    - 200% 이상: 매우 안정적인 단기 지급능력
-                    - 100~200%: 적정한 단기 지급능력
-                    - 100% 미만: 단기 지급능력 주의 필요
-                    """)
+                    with cf_col3:
+                        if metrics['cashflow']['capex'] is not None:
+                            capex = abs(metrics['cashflow']['capex'])  # CAPEX는 보통 음수로 표시되므로 절대값 처리
+                            st.metric("설비투자", format_number(capex))
+                            
+                    # 현금흐름 설명 추가
+                    with st.expander("💡 현금흐름 지표 설명"):
+                        st.markdown("""
+                        ### 현금흐름 지표 해석 가이드
+                        
+                        #### 1️⃣ 영업현금흐름
+                        - 기업의 주된 영업활동에서 발생한 현금흐름
+                        - 양(+)의 값: 건전한 영업활동
+                        - 음(-)의 값: 영업활동에서 현금 유출 발생
+                        
+                        #### 2️⃣ 잉여현금흐름
+                        - 영업현금흐름에서 필수 투자비용을 제외한 금액
+                        - 양(+)의 값: 추가 투자/배당 여력 존재
+                        - 음(-)의 값: 외부 자금조달 필요 가능성
+                        
+                        #### 3️⃣ 설비투자(CAPEX)
+                        - 기업의 생산설비, 부동산 등 고정자산 투자금액
+                        - 높은 투자: 미래 성장을 위한 투자 진행
+                        - 낮은 투자: 보수적 재무운영 또는 성장 둔화
+                        """)
 
             # Footer
             st.sidebar.markdown("---")
+            
             st.sidebar.text("Created by Sean J. Kim")
 
         except Exception as e:
