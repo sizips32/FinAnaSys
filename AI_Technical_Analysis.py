@@ -18,6 +18,14 @@ from importlib.metadata import version, PackageNotFoundError
 import requests
 from openai import OpenAI
 from openai import APIError, APIConnectionError, RateLimitError, AuthenticationError
+import socket
+
+# Set up Streamlit app configuration (must be the first Streamlit command)
+st.set_page_config(
+    page_title="AI Technical Analysis",
+    page_icon="📈",
+    layout="wide"
+)
 
 # 패키지 버전 검증 로직 수정
 def verify_package_versions():
@@ -73,7 +81,6 @@ except ModuleNotFoundError:
     raise ModuleNotFoundError("Streamlit is not installed. Install it using 'pip install streamlit'")
 
 # Set up Streamlit app
-st.set_page_config(layout="wide")
 st.title("AI 기반 재무-기술적 분석 시스템")
 st.markdown("""
 ### 분석 방법론
@@ -1251,5 +1258,12 @@ def main():
         return
 
 if __name__ == "__main__":
+    import streamlit as st
+    import os
+    
+    # 8505 포트 강제 설정
+    os.environ['STREAMLIT_SERVER_PORT'] = '8505'
+    os.environ['STREAMLIT_SERVER_ADDRESS'] = 'localhost'
+    
     main()
 
