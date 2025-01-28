@@ -668,7 +668,11 @@ class ProbabilisticAnalyzer:
         self.poly_features = None
         
     def prepare_features(self):
-        """예측을 위한 특성 준비"""
+        """
+        예측을 위한 특성을 준비하는 함수입니다.
+        이 과정에서 무한대(inf)나 -inf 같은 잘못된 값이 있다면 NaN으로 변환한 뒤
+        제거(drop)하여 MinMaxScaler 또는 모델 훈련 시 에러가 발생하지 않도록 합니다.
+        """
         try:
             # 기본 특성 선택
             features = [
@@ -679,7 +683,7 @@ class ProbabilisticAnalyzer:
             # 데이터 복사본 생성
             df = self.data.copy()
             
-            # 기술적 지표 계산
+            # 기술적 지표 기반의 추가 컬럼 생성
             df['Target'] = df['Close'].shift(-1) > df['Close']
             df['BB_Position'] = (df['Close'] - df['BB_lower']) / (df['BB_upper'] - df['BB_lower'])
             df['Price_Change'] = df['Close'].pct_change()
@@ -691,20 +695,15 @@ class ProbabilisticAnalyzer:
             df['SMA_20'] = df['Close'].rolling(window=20).mean()
             df['MA_Cross'] = np.where(df['SMA_5'] > df['SMA_20'], 1, -1)
             
-            # 추가 특성 목록에 추가
-            features.extend(['BB_Position', 'Price_Change', 'Volume_Change', 
-                           'ROC', 'MOM', 'Volatility', 'MA_Cross'])
+            # NaN이나 무한대 값을 제거하기 전에 먼저 ∞를 NaN으로 변환하고, 이후 NaN 값을 제거합니다.
+            df.replace([np.inf, -np.inf], np.nan, inplace=True)
+            df.dropna(inplace=True)
             
-            # NaN 제거
-            df = df.dropna()
-            
-            # 마지막 행 제거 (다음 날 종가를 알 수 없음)
+            # 다음 날 종가를 알 수 없으므로 마지막 행 제거
             df = df.iloc[:-1]
             
             # 데이터 분할
             train_size = int(len(df) * (1 - self.test_size))
-            
-            # 학습/테스트 데이터 분할
             train_data = df[:train_size]
             test_data = df[train_size:]
             
@@ -719,28 +718,27 @@ class ProbabilisticAnalyzer:
             self.X_train_scaled = self.scaler.fit_transform(self.X_train)
             self.X_test_scaled = self.scaler.transform(self.X_test)
             
-            # LSTM용 시퀀스 데이터
+            # LSTM용 시퀀스 데이터 생성
             self.X_train_seq = self.create_sequences(self.X_train_scaled)
             self.X_test_seq = self.create_sequences(self.X_test_scaled)
             self.y_train_seq = self.y_train[self.sequence_length:].values
             self.y_test_seq = self.y_test[self.sequence_length:].values
             
-            # 선형 회귀를 위한 데이터 준비
+            # 선형 회귀를 위한 다항식 변환 예시
             self.poly_features = PolynomialFeatures(degree=2, include_bias=False)
             X_train_poly = self.poly_features.fit_transform(self.X_train_scaled)
             X_test_poly = self.poly_features.transform(self.X_test_scaled)
             
-            # 선형 회귀용 타겟 (다음 날의 종가 변화율)
+            # 다음 날 종가 변화율 예시
             train_returns = train_data['Close'].pct_change().shift(-1).iloc[:-1]
             test_returns = test_data['Close'].pct_change().shift(-1).iloc[:-1]
             
-            # 회귀 데이터 준비
-            self.X_train_reg = X_train_poly[:-1]  # 마지막 행 제외
-            self.X_test_reg = X_test_poly[:-1]    # 마지막 행 제외
+            self.X_train_reg = X_train_poly[:-1]
+            self.X_test_reg = X_test_poly[:-1]
             self.y_train_reg = train_returns.dropna()
             self.y_test_reg = test_returns.dropna()
             
-            # 데이터 길이 확인 및 조정
+            # 데이터 길이 보정
             min_train_len = min(len(self.X_train_reg), len(self.y_train_reg))
             min_test_len = min(len(self.X_test_reg), len(self.y_test_reg))
             
@@ -749,13 +747,12 @@ class ProbabilisticAnalyzer:
             self.X_test_reg = self.X_test_reg[:min_test_len]
             self.y_test_reg = self.y_test_reg[:min_test_len]
             
-            # 데이터 준비 상태 확인
             assert len(self.X_train_reg) == len(self.y_train_reg), "학습 데이터 길이 불일치"
             assert len(self.X_test_reg) == len(self.y_test_reg), "테스트 데이터 길이 불일치"
             
-            st.success("특성 준비가 완료되었습니다.")
+            st.success("특성 준비가 완료되었습니다. (무한대 및 결측치 처리를 완료)")
             return features
-            
+        
         except Exception as e:
             st.error(f"특성 준비 중 오류 발생: {str(e)}")
             st.write("데이터 형태:", self.data.shape)
