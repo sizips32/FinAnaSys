@@ -1,7 +1,5 @@
 ## Source: @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
 
-#### NOTE: Set yfinance to the following version to get chart working: "pip install yfinance==0.2.40"
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -11,74 +9,54 @@ import tempfile
 import base64
 import os
 import numpy as np
+from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from datetime import datetime
-from importlib.metadata import version, PackageNotFoundError
-import requests
-from openai import OpenAI
-from openai import APIError, APIConnectionError, RateLimitError, AuthenticationError
-import socket
 
-# Set up Streamlit app configuration (must be the first Streamlit command)
-st.set_page_config(
-    page_title="AI Technical Analysis",
-    page_icon="📈",
-    layout="wide"
-)
+st.set_page_config(layout="wide")
+st.title("AI 기반 재무-기술적 분석 시스템")
+st.markdown("""
+### 시스템 소개
+이 시스템은 주식 시장 데이터를 분석하여 투자 의사결정을 지원하는 AI 기반 분석 도구입니다.
+
+#### 주요 기능
+1. 실시간 주가 데이터 분석
+2. 기술적 지표 기반 매매 시그널
+3. AI 기반 투자 추천
+4. 재무제표 분석
+""")
 
 # 패키지 버전 검증 로직 수정
 def verify_package_versions():
-    required_versions = {
-        'yfinance': '0.2.40',
-        'pandas': '1.5.3',
-        'numpy': '1.24.0',
-        'streamlit': '1.24.0'
-    }
+    """필수 패키지 설치 여부 확인"""
+    required_packages = ['streamlit', 'pandas', 'numpy', 'plotly', 'sklearn']
     
     missing_packages = []
-    version_mismatch = []
     
-    for package, required_version in required_versions.items():
+    for package in required_packages:
         try:
-            installed_version = version(package)
-            if installed_version != required_version:
-                if package == 'yfinance':  # yfinance 특별 처리
-                    st.error(f"""
-                    yfinance 버전 불일치. 다음 명령어를 순서대로 실행하세요:
-                    1. pip uninstall yfinance
-                    2. pip cache purge
-                    3. pip install yfinance==0.2.40
-                    """)
-                version_mismatch.append(f"{package} (현재: {installed_version}, 필요: {required_version})")
-        except PackageNotFoundError:
+            __import__(package)
+        except ImportError:
             missing_packages.append(package)
     
-    if missing_packages or version_mismatch:
+    if missing_packages:
+        st.error(f"""
+        다음 패키지들이 설치되지 않았습니다: {', '.join(missing_packages)}
+        터미널에서 다음 명령어를 실행하세요:
+        pip install {' '.join(missing_packages)}
+        """)
         return False
     return True
 
-# 메인 코드 시작 전에 버전 검증
+# 메인 코드 시작 전에 패키지 검증
 if not verify_package_versions():
     st.stop()
 
-# yfinance 버전 확인 및 경고
 try:
-    import yfinance as yf
     yf_version = yf.__version__
-    if yf_version != "0.2.40":
-        st.warning(f"""
-        현재 yfinance 버전 ({yf_version})이 권장 버전(0.2.40)과 다릅니다.
-        다음 명령어로 권장 버전을 설치하세요:
-        pip install yfinance==0.2.40
-        """)
-except:
-    st.error("yfinance 패키지를 설치해주세요: pip install yfinance==0.2.40")
-
-try:
-    import streamlit as st
-except ModuleNotFoundError:
-    raise ModuleNotFoundError("Streamlit is not installed. Install it using 'pip install streamlit'")
+    st.info(f"현재 yfinance 버전: {yf_version}")
+except Exception as e:
+    st.error(f"yfinance 패키지 버전 확인 중 오류 발생: {str(e)}")
 
 # Set up Streamlit app
 st.title("AI 기반 재무-기술적 분석 시스템")
@@ -311,31 +289,66 @@ def get_financial_metrics(ticker):
     """기업 재무 지표 수집 함수"""
     try:
         info = ticker.info
-        financials = ticker.financials
-        balance_sheet = ticker.balance_sheet
-        cashflow = ticker.cashflow  # 현금흐름표 데이터 추가
+        
+        # 재무제표 데이터 가져오기
+        try:
+            financials = ticker.income_stmt
+            balance_sheet = ticker.balance_sheet
+            cashflow = ticker.cashflow
+        except Exception as e:
+            st.warning(f"재무제표 데이터 가져오기 실패: {str(e)}")
+            financials = pd.DataFrame()
+            balance_sheet = pd.DataFrame()
+            cashflow = pd.DataFrame()
         
         # 최신 재무제표 날짜 확인
-        latest_financial_date = financials.columns[0].strftime('%Y-%m-%d') if not financials.empty else '날짜 없음'
-        latest_balance_date = balance_sheet.columns[0].strftime('%Y-%m-%d') if not balance_sheet.empty else '날짜 없음'
-        latest_cashflow_date = cashflow.columns[0].strftime('%Y-%m-%d') if not cashflow.empty else '날짜 없음'
+        try:
+            latest_financial_date = financials.index[0].strftime('%Y-%m-%d') if not financials.empty else '날짜 없음'
+            latest_balance_date = balance_sheet.index[0].strftime('%Y-%m-%d') if not balance_sheet.empty else '날짜 없음'
+            latest_cashflow_date = cashflow.index[0].strftime('%Y-%m-%d') if not cashflow.empty else '날짜 없음'
+        except Exception as e:
+            st.warning(f"날짜 데이터 처리 중 오류: {str(e)}")
+            latest_financial_date = '날짜 없음'
+            latest_balance_date = '날짜 없음'
+            latest_cashflow_date = '날짜 없음'
         
-        # 현금흐름 관련 지표 추가
-        operating_cashflow = cashflow.loc['Operating Cash Flow'].iloc[0] if 'Operating Cash Flow' in cashflow.index else None
-        free_cashflow = cashflow.loc['Free Cash Flow'].iloc[0] if 'Free Cash Flow' in cashflow.index else None
-        capital_expenditure = cashflow.loc['Capital Expenditure'].iloc[0] if 'Capital Expenditure' in cashflow.index else None
+        # 현금흐름 관련 지표
+        try:
+            operating_cashflow = cashflow.loc[cashflow.index[0], 'Operating Cash Flow'] if not cashflow.empty else None
+            free_cashflow = cashflow.loc[cashflow.index[0], 'Free Cash Flow'] if not cashflow.empty else None
+            capital_expenditure = cashflow.loc[cashflow.index[0], 'Capital Expenditure'] if not cashflow.empty else None
+        except Exception as e:
+            st.warning(f"현금흐름 데이터 처리 중 오류: {str(e)}")
+            operating_cashflow = None
+            free_cashflow = None
+            capital_expenditure = None
+        
+        # 재무상태표 지표
+        try:
+            total_debt = balance_sheet.loc[balance_sheet.index[0], 'Total Debt'] if not balance_sheet.empty else None
+            total_assets = balance_sheet.loc[balance_sheet.index[0], 'Total Assets'] if not balance_sheet.empty else None
+            current_assets = balance_sheet.loc[balance_sheet.index[0], 'Total Current Assets'] if not balance_sheet.empty else None
+            current_liabilities = balance_sheet.loc[balance_sheet.index[0], 'Total Current Liabilities'] if not balance_sheet.empty else None
+        except Exception as e:
+            st.warning(f"재무상태표 데이터 처리 중 오류: {str(e)}")
+            total_debt = None
+            total_assets = None
+            current_assets = None
+            current_liabilities = None
         
         metrics = {
-            'sector': info.get('sector', 'N/A'),  # 업종
-            'industry': info.get('industry', 'N/A'),  # 세부 업종
-            'marketCap': info.get('marketCap', None),  # 시가총액
-            'priceToSalesTrailing12Months': info.get('priceToSalesTrailing12Months', None),  # PSR
-            'dividendYield': info.get('dividendYield', None),  # 배당수익률
-            'totalDebt': balance_sheet.loc['Total Debt'].iloc[0] if 'Total Debt' in balance_sheet.index else None,
-            'totalAssets': balance_sheet.loc['Total Assets'].iloc[0] if 'Total Assets' in balance_sheet.index else None,
-            'currentAssets': balance_sheet.loc['Total Current Assets'].iloc[0] if 'Total Current Assets' in balance_sheet.index else None,
-            'currentLiabilities': balance_sheet.loc['Total Current Liabilities'].iloc[0] if 'Total Current Liabilities' in balance_sheet.index else None,
-            'cashflow': {  # 현금흐름 정보 추가
+            'sector': info.get('sector', 'N/A'),
+            'industry': info.get('industry', 'N/A'),
+            'marketCap': info.get('marketCap', None),
+            'priceToSalesTrailing12Months': info.get('priceToSalesTrailing12Months', None),
+            'dividendYield': info.get('dividendYield', None),
+            'debtRatio': info.get('debtRatio', None),
+            'currentRatio': info.get('currentRatio', None),
+            'totalDebt': total_debt,
+            'totalAssets': total_assets,
+            'currentAssets': current_assets,
+            'currentLiabilities': current_liabilities,
+            'cashflow': {
                 'operating': operating_cashflow,
                 'free': free_cashflow,
                 'capex': capital_expenditure
@@ -347,19 +360,8 @@ def get_financial_metrics(ticker):
             }
         }
         
-        # 부채비율 계산
-        if metrics['totalDebt'] is not None and metrics['totalAssets'] is not None:
-            metrics['debtRatio'] = (metrics['totalDebt'] / metrics['totalAssets']) * 100
-        else:
-            metrics['debtRatio'] = None
-            
-        # 유동비율 계산
-        if metrics['currentAssets'] is not None and metrics['currentLiabilities'] is not None:
-            metrics['currentRatio'] = (metrics['currentAssets'] / metrics['currentLiabilities']) * 100
-        else:
-            metrics['currentRatio'] = None
-            
         return metrics
+        
     except Exception as e:
         st.warning(f"재무 지표 수집 중 오류 발생: {str(e)}")
         return None
@@ -390,7 +392,7 @@ def main():
             calculate_technical_indicators.cache.clear()
     
     # 임시 파일 자동 정리
-    @st.cache(allow_output_mutation=True)
+    @st.cache_resource
     def cleanup_temp_files():
         temp_dir = tempfile.gettempdir()
         for file in os.listdir(temp_dir):
@@ -399,6 +401,7 @@ def main():
                     os.remove(os.path.join(temp_dir, file))
                 except Exception:
                     pass
+        return None  # 명시적 반환값 추가
     
     st.title("AI Technical Analysis")
     
@@ -618,186 +621,62 @@ def main():
             # Analyze chart with LLaMA 3.2 Vision
             st.subheader("AI-Powered Analysis")
 
-            # API 설정 섹션
-            with st.sidebar:
-                st.markdown("### 🔑 API 설정")
-                api_key = st.text_input(
-                    "OpenAI API Key를 입력하세요",
-                    type="password",
-                    help="https://platform.openai.com/account/api-keys 에서 API 키를 확인할 수 있습니다."
-                )
-                
-                # API 키 형식 검증
-                if api_key:
-                    if not api_key.startswith('sk-') or len(api_key) < 20:
-                        st.sidebar.error("올바른 형식의 API 키를 입력해주세요. (sk-로 시작)")
-                        api_key = None
-
-                # 모델 선택
-                model_options = {
-                    "GPT-4 Vision": "gpt-4-vision-preview",
-                    "GPT-4o-mini": "gpt-4o-mini",
-                    "GPT-3.5 Turbo": "gpt-3.5-turbo"
-                }
-                selected_model = st.selectbox(
-                    "AI 모델 선택",
-                    options=list(model_options.keys()),
-                    index=0
-                )
-
-            def prepare_analysis_prompt(data, indicators):
-                """AI 분석을 위한 프롬프트 생성"""
-                current_price = data['Close'].iloc[-1]
-                price_change = ((current_price - data['Close'].iloc[0]) / data['Close'].iloc[0]) * 100
-                
-                return f"""
-                주어진 주식 차트에 대해 기술적 분석을 수행하세요. 다음 정보를 바탕으로 분석해주세요:
-
-                1. 현재가: {current_price:.2f}
-                2. 기간 수익률: {price_change:.2f}%
-                3. 표시된 지표: {', '.join(indicators)}
-
-                다음 순서로 분석해주세요:
-                1. 현재 시장 상황 요약
-                2. 주요 기술적 지표 분석
-                3. 매수/매도/관망 추천과 그 근거
-                4. 주의해야 할 리스크 요인
+            def prepare_analysis_prompt():
+                return """
+                You are a Stock Trader specializing in Technical Analysis at a top financial institution.
+                Analyze the stock chart's technical indicators and provide a buy/hold/sell recommendation.
+                Base your recommendation only on the candlestick chart and the displayed technical indicators.
+                First, provide the recommendation, then, provide your detailed reasoning.
                 """
 
             if st.button("Run AI Analysis", key="main_ai_analysis_button"):
-                if not api_key:
-                    st.error("올바른 OpenAI API Key를 입력해주세요.")
-                    st.info("API 키는 'sk-'로 시작하며, OpenAI 웹사이트에서 확인할 수 있습니다.")
-                    return
-                
-                with st.spinner("차트 분석 중..."):
+                with st.spinner("Analyzing the chart, please wait..."):
                     try:
-                        # OpenAI 클라이언트 초기화
-                        client = OpenAI(api_key=api_key.strip())  # 공백 제거
-                        
-                        # 임시 파일 생성 및 관리
+                        # Save chart as a temporary image
                         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
-                            try:
-                                # 차트 이미지 저장
-                                fig.write_image(tmpfile.name, format="png")
-                                
-                                # 이미지 인코딩
-                                with open(tmpfile.name, "rb") as image_file:
-                                    image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                                
-                                # API 요청 준비
-                                messages = []
-                                
-                                # 선택된 모델이 Vision 모델인 경우
-                                if selected_model == "GPT-4 Vision":
-                                    messages = [
-                                        {
-                                            "role": "user",
-                                            "content": [
-                                                {
-                                                    "type": "text",
-                                                    "text": prepare_analysis_prompt(data, indicators)
-                                                },
-                                                {
-                                                    "type": "image_url",
-                                                    "image_url": {
-                                                        "url": f"data:image/png;base64,{image_data}"
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                else:
-                                    # Vision이 아닌 모델의 경우 이미지 없이 텍스트만 전송
-                                    messages = [
-                                        {
-                                            "role": "user",
-                                            "content": prepare_analysis_prompt(data, indicators)
-                                        }
-                                    ]
-                                
-                                # API 요청
-                                response = client.chat.completions.create(
-                                    model=model_options[selected_model],
-                                    messages=messages,
-                                    max_tokens=2000,
-                                    temperature=0.7
-                                )
-                                
-                                if response and hasattr(response, 'choices') and len(response.choices) > 0:
-                                    analysis_text = response.choices[0].message.content
-                                    
-                                    # 분석 결과 표시
-                                    st.markdown("### 🤖 AI 분석 결과")
-                                    st.markdown(analysis_text)
-                                    
-                                    # 분석 시간 표시
-                                    st.caption(f"분석 완료 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                                    st.caption(f"사용 모델: {selected_model}")
-                                else:
-                                    st.error("API 응답에서 분석 결과를 찾을 수 없습니다.")
-                            
-                            except RateLimitError:
-                                st.error("API 사용량 한도에 도달했습니다.")
-                                st.warning("잠시 후 다시 시도하거나 API 키의 한도를 확인해주세요.")
-                            
-                            except APIError as e:
-                                st.error(f"API 오류: {str(e)}")
-                                st.warning("잠시 후 다시 시도해주세요.")
-                            
-                            except AuthenticationError:
-                                st.error("API 키 인증 실패")
-                                st.warning("""
-                                다음 사항을 확인해주세요:
-                                1. API 키가 올바르게 입력되었는지 확인
-                                2. API 키가 유효한지 OpenAI 웹사이트에서 확인
-                                3. 결제 정보가 등록되어 있는지 확인
-                                """)
-                            
-                            except APIConnectionError:
-                                st.error("API 연결 오류")
-                                st.warning("인터넷 연결을 확인하고 다시 시도해주세요.")
-                            
-                            except Exception as e:
-                                st.error(f"AI 분석 중 오류 발생: {str(e)}")
-                                st.warning("""
-                                다음 사항을 확인해주세요:
-                                1. API 키가 올바른지 확인
-                                2. 인터넷 연결 상태 확인
-                                3. 잠시 후 다시 시도
-                                """)
-                            
-                            finally:
-                                # 임시 파일 정리
-                                try:
-                                    os.unlink(tmpfile.name)
-                                except Exception as e:
-                                    st.warning(f"임시 파일 삭제 중 오류 발생: {str(e)}")
-                    
+                            fig.write_image(tmpfile.name)
+                            tmpfile_path = tmpfile.name
+
+                        # Read image and encode to Base64
+                        with open(tmpfile_path, "rb") as image_file:
+                            image_data = base64.b64encode(image_file.read()).decode('utf-8')
+
+                        # Prepare AI analysis request
+                        messages = [{
+                            'role': 'user',
+                            'content': prepare_analysis_prompt(),
+                            'images': [image_data]
+                        }]
+                        response = ollama.chat(model='llama3.2-vision', messages=messages)
+
+                        # Display AI analysis result
+                        st.write("**AI Analysis Results:**")
+                        st.write(response["message"]["content"])
+
+                        # Clean up temporary file
+                        os.remove(tmpfile_path)
                     except Exception as e:
-                        st.error(f"차트 이미지 생성 중 오류 발생: {str(e)}")
-                        st.warning("차트 데이터를 다시 불러온 후 시도해주세요.")
+                        st.error(f"AI 분석 중 오류 발생: {str(e)}")
 
             def calculate_signal_probabilities(data, symbol):
                 """각 지표별 시그널을 분석하여 매수/매도/관망 확률 계산"""
-                
-                signals = {
-                    'trend': 0,
-                    'momentum': 0,
-                    'volatility': 0,
-                    'volume': 0,
-                    'fundamental': 0  # 초기값 설정
-                }
-                
-                weights = {
-                    'trend': 0.25,      # 추세 지표 (SMA, MACD)
-                    'momentum': 0.25,   # 모멘텀 지표 (RSI, MFI)
-                    'volatility': 0.2,  # 변동성 지표 (볼린저 밴드, 스퀴즈)
-                    'volume': 0.15,     # 거래량 지표 (VWAP)
-                    'fundamental': 0.15 # 재무 지표 (ROE, PER, PBR)
-                }
-                
                 try:
+                    signals = {
+                        'trend': 0,
+                        'momentum': 0,
+                        'volatility': 0,
+                        'volume': 0,
+                        'fundamental': 0  # 초기값 설정
+                    }
+                    
+                    weights = {
+                        'trend': 0.25,      # 추세 지표 (SMA, MACD)
+                        'momentum': 0.25,   # 모멘텀 지표 (RSI, MFI)
+                        'volatility': 0.2,  # 변동성 지표 (볼린저 밴드, 스퀴즈)
+                        'volume': 0.15,     # 거래량 지표 (VWAP)
+                        'fundamental': 0.15 # 재무 지표 (ROE, PER, PBR)
+                    }
+
                     # 1. 추세 분석
                     sma = calculate_technical_indicators(data, "20-Day SMA")
                     macd, signal = calculate_technical_indicators(data, "MACD")
@@ -868,78 +747,91 @@ def main():
                         ticker = yf.Ticker(symbol)
                         
                         # 재무제표 데이터 가져오기
-                        financials = ticker.financials
-                        balance_sheet = ticker.balance_sheet
+                        try:
+                            financials = ticker.income_stmt
+                            balance_sheet = ticker.balance_sheet
+                        except Exception as e:
+                            st.warning(f"재무제표 데이터 가져오기 실패: {str(e)}")
+                            financials = pd.DataFrame()
+                            balance_sheet = pd.DataFrame()
                         
                         # ROE 계산
+                        roe = None
+                        roe_signal = 0
+                        
                         if not financials.empty and not balance_sheet.empty:
                             try:
                                 # 당기순이익 가져오기
-                                if 'Net Income' in financials.index:
-                                    net_income = financials.loc['Net Income'].iloc[0]
-                                else:
-                                    net_income = None
-                                
-                                # 자기자본 가져오기 (여러 가능한 키 시도)
-                                equity_keys = ['Stockholders Equity', 'Total Stockholder Equity', 
-                                             'Total Equity', 'Shareholders Equity']
+                                net_income = None
+                                try:
+                                    net_income = financials.loc[financials.index[0], 'NetIncome']
+                                except (KeyError, AttributeError):
+                                    try:
+                                        net_income = financials.loc[financials.index[0], 'Net Income']
+                                    except (KeyError, AttributeError):
+                                        st.warning("당기순이익 데이터를 찾을 수 없습니다. (NetIncome/Net Income)")
+
+                                # 자기자본 가져오기
                                 total_equity = None
-                                
-                                for key in equity_keys:
-                                    if key in balance_sheet.index:
-                                        total_equity = balance_sheet.loc[key].iloc[0]
-                                        break
-                                
+                                try:
+                                    total_equity = balance_sheet.loc[balance_sheet.index[0], 'StockholderEquity']
+                                except (KeyError, AttributeError):
+                                    try:
+                                        total_equity = balance_sheet.loc[balance_sheet.index[0], 'Total Stockholder Equity']
+                                    except (KeyError, AttributeError):
+                                        st.warning("자기자본 데이터를 찾을 수 없습니다. (StockholderEquity/Total Stockholder Equity)")
+
                                 # ROE 계산 및 시그널 생성
                                 if net_income is not None and total_equity is not None and total_equity != 0:
                                     roe = (net_income / total_equity) * 100
                                     
-                                    if roe > 15: roe_signal = 1
-                                    elif roe > 10: roe_signal = 0.5
-                                    elif roe > 5: roe_signal = 0
-                                    else: roe_signal = -1
-                                else:
-                                    roe = None
-                                    roe_signal = 0
-                                    
+                                    if roe > 15:
+                                        roe_signal = 1
+                                    elif roe > 10:
+                                        roe_signal = 0.5
+                                    elif roe > 5:
+                                        roe_signal = 0
+                                    else:
+                                        roe_signal = -1
+                                        
                             except Exception as e:
                                 st.warning(f"ROE 계산 중 오류 발생: {str(e)}")
-                                roe = None
-                                roe_signal = 0
-                        else:
-                            roe = None
-                            roe_signal = 0
                         
                         # 기타 재무 정보
                         info = ticker.info
                         
                         # PER 분석
                         per = info.get('forwardPE')
+                        per_signal = 0
                         if per and per > 0:
-                            if per < 10: per_signal = 1
-                            elif per < 20: per_signal = 0.5
-                            elif per < 30: per_signal = -0.5
-                            else: per_signal = -1
-                        else:
-                            per = None
-                            per_signal = 0
+                            if per < 10:
+                                per_signal = 1
+                            elif per < 20:
+                                per_signal = 0.5
+                            elif per < 30:
+                                per_signal = -0.5
+                            else:
+                                per_signal = -1
                         
                         # PBR 분석
                         pbr = info.get('priceToBook')
+                        pbr_signal = 0
                         if pbr and pbr > 0:
-                            if pbr < 1: pbr_signal = 1
-                            elif pbr < 3: pbr_signal = 0.5
-                            elif pbr < 5: pbr_signal = -0.5
-                            else: pbr_signal = -1
-                        else:
-                            pbr = None
-                            pbr_signal = 0
+                            if pbr < 1:
+                                pbr_signal = 1
+                            elif pbr < 3:
+                                pbr_signal = 0.5
+                            elif pbr < 5:
+                                pbr_signal = -0.5
+                            else:
+                                pbr_signal = -1
                         
                         # 재무 종합 점수 계산
                         signals['fundamental'] = (roe_signal + per_signal + pbr_signal) / 3
                         
                     except Exception as e:
-                        st.warning(f"재무 데이터 분석 중 오류 발생: {str(e)}")
+                        st.error(f"재무 데이터 분석 중 오류 발생: {str(e)}")
+                        signals['fundamental'] = 0
                         roe, per, pbr = None, None, None
                     
                     # 최종 확률 계산
@@ -1258,12 +1150,5 @@ def main():
         return
 
 if __name__ == "__main__":
-    import streamlit as st
-    import os
-    
-    # 8505 포트 강제 설정
-    os.environ['STREAMLIT_SERVER_PORT'] = '8505'
-    os.environ['STREAMLIT_SERVER_ADDRESS'] = 'localhost'
-    
     main()
 
