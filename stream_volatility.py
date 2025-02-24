@@ -79,51 +79,90 @@ plt.rcParams['axes.unicode_minus'] = False
 ########################################
 # 3. 지표별 정의 (간단 설명)
 ########################################
-st.header("📌 주요 지표 정의 및 의미")
+st.header("📌 주요 지표 정의 및 해석")
 
-with st.expander("1. Sharpe Ratio", expanded=False):
+with st.expander("1. Sharpe Ratio (샤프 비율)", expanded=False):
     st.markdown("""
-    - (초과수익률) / (전체 변동성)
+    **정의**: (초과수익률) / (전체 변동성)
     - 전체 변동성 대비, 위험 대비 수익이 얼마나 효율적인지 평가
+    
+    **일반적인 범위**:
+    - < 0: 위험이 수익보다 큼
+    - 1~2: 보통
+    - 2~3: 우수
+    - > 3: 매우 우수
     """)
 
-with st.expander("2. Sortino Ratio", expanded=False):
+with st.expander("2. Sortino Ratio (소르티노 비율)", expanded=False):
     st.markdown("""
-    - (초과수익률) / (하방 변동성)
+    **정의**: (초과수익률) / (하방 변동성)
     - 상승 변동성 제외, '하락 위험'만으로 수익 효율을 측정
+    
+    **일반적인 범위**:
+    - < 0: 하락 위험 큼
+    - 1~2: 보통
+    - > 2: 안정적 수익
     """)
 
-with st.expander("3. MDD (Maximum Drawdown)", expanded=False):
+with st.expander("3. MDD (Maximum Drawdown, 최대 낙폭)", expanded=False):
     st.markdown("""
-    - 투자기간 중 **가장 큰 낙폭** (최고점 대비 몇 %까지 하락했는지)
+    **정의**: 투자기간 중 **가장 큰 낙폭** (최고점 대비 몇 %까지 하락했는지)
+    
+    **일반적인 범위**:
+    - ~10%: 매우 안정
+    - 10~20%: 보통
+    - 20~30%: 고위험
+    - > 30%: 매우 큼
     """)
 
-with st.expander("4. Alpha", expanded=False):
+with st.expander("4. Alpha (알파)", expanded=False):
     st.markdown("""
-    - 시장(벤치마크) 대비 **초과성과** (베타로 설명되지 않는 추가 수익)
+    **정의**: 시장(벤치마크) 대비 **초과성과** (베타로 설명되지 않는 추가 수익)
+    
+    **일반적인 범위**:
+    - > 0: 시장 대비 초과수익
+    - < 0: 시장 대비 부진
     """)
 
-with st.expander("5. Beta", expanded=False):
+with st.expander("5. Beta (베타)", expanded=False):
     st.markdown("""
-    - 시장 변동(벤치마크)에 대한 포트폴리오 민감도
-    - 1보다 크면 시장보다 더 크게 움직이는 '공격적' 자산
+    **정의**: 시장 변동(벤치마크)에 대한 포트폴리오 민감도
+    
+    **일반적인 범위**:
+    - < 1: 시장보다 변동성 낮음(방어적)
+    - = 1: 시장과 유사
+    - > 1: 시장보다 변동성 큼(공격적)
     """)
 
-with st.expander("6. Information Ratio", expanded=False):
+with st.expander("6. Information Ratio (정보 비율)", expanded=False):
     st.markdown("""
-    - 벤치마크 대비 초과수익을 **Tracking Error(초과 변동성)** 대비 얼마나 안정적으로 내는지
+    **정의**: 벤치마크 대비 초과수익을 **Tracking Error(초과 변동성)** 대비 얼마나 안정적으로 내는지
+    
+    **일반적인 범위**:
+    - <= 0: 벤치마크 대비 초과수익 없음
+    - 0.5~1: 의미 있는 초과수익
+    - > 1: 우수
     """)
 
-with st.expander("7. Treynor Ratio", expanded=False):
+with st.expander("7. Treynor Ratio (트레이너 비율)", expanded=False):
     st.markdown("""
-    - (초과수익) / Beta
+    **정의**: (초과수익) / Beta
     - 시스템적 위험(베타)을 감수한 대가로 얼마만큼 초과이익을 냈는지
+    
+    **일반적인 범위**:
+    - > 0: 베타 대비 초과이익 있음 (수치가 높을수록 유리)
     """)
 
-with st.expander("8. Calmar Ratio", expanded=False):
+with st.expander("8. Calmar Ratio (칼마 비율)", expanded=False):
     st.markdown("""
-    - (연간 수익률) / (최대 낙폭(MDD)의 절댓값)
+    **정의**: (연간 수익률) / (최대 낙폭(MDD)의 절댓값)
     - 낙폭 대비 **연수익**이 얼마나 되는지 평가 (장기 안정성과 수익성 함께 고려)
+    
+    **일반적인 범위**:
+    - < 1: 낙폭 대비 수익률 작음
+    - 1~2: 보통
+    - 2~3: 우수
+    - > 3: 매우 우수
     """)
 
 
@@ -567,50 +606,6 @@ if execute:
             else:
                 st.write("🔍 **관망**: 기대수익 낮으나, Sharpe Ratio 등이 보통 수준. 시장상황을 좀 더 지켜보세요.")
 
-        # (21) 지표별 의미 & 범위 (결과 값 아래에서 확인)
-        st.markdown("---")
-        st.markdown("### 지표별 의미와 일반적인 범위 해석")
-        st.markdown("""
-        - **Sharpe Ratio**  
-          - <0: 위험이 수익보다 큼  
-          - 1~2: 보통  
-          - 2~3: 우수  
-          - >3: 매우 우수  
-
-        - **Sortino Ratio**  
-          - <0: 하락 위험 큼  
-          - 1~2: 보통  
-          - >2: 안정적 수익  
-
-        - **MDD**  
-          - ~10%: 매우 안정  
-          - 10~20%: 보통  
-          - 20~30%: 고위험  
-          - >30%: 매우 큼  
-
-        - **Calmar Ratio**  
-          - <1: 낙폭 대비 수익률 작음  
-          - 1~2: 보통  
-          - 2~3: 우수  
-          - >3: 매우 우수  
-
-        - **Information Ratio**  
-          - <=0: 벤치마크 대비 초과수익 없음  
-          - 0.5~1: 의미 있는 초과수익  
-          - >1: 우수  
-
-        - **Treynor Ratio**  
-          - >0: 베타 대비 초과이익 있음 (수치가 높을수록 유리)  
-
-        - **Alpha**  
-          - >0: 시장 대비 초과수익  
-          - <0: 시장 대비 부진  
-
-        - **Beta**  
-          - <1: 시장보다 변동성 낮음(방어)  
-          - =1: 시장과 유사  
-          - >1: 시장보다 변동성 큼(공격)
-        """)
-
+        # (21) 종합 결과
         st.markdown("---")
         st.success("💡 분석 완료! 위 지표와 해석을 종합해 최종 투자 결정을 내리시길 바랍니다.")
