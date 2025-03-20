@@ -1,0 +1,2154 @@
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('CREATE TABLE IF NOT EXISTS "_kv" ("key" VARCHAR(255) NOT NULL PRIMARY KEY, "value" VARCHAR(255)) WITHOUT ROWID', [])
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/app.log", inode=133828080, flags=10100, id=81278354): is_created, is_file
+DEBUG:fsevents:queue_event <FileCreatedEvent: event_type=created, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/app.log', is_directory=False>
+DEBUG:fsevents:queue_event <DirModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys', is_directory=True>
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:peewee:('CREATE TABLE IF NOT EXISTS "_cookieschema" ("strategy" VARCHAR(255) NOT NULL PRIMARY KEY, "fetch_date" DATETIME NOT NULL, "cookie_bytes" BLOB NOT NULL) WITHOUT ROWID', [])
+DEBUG:peewee:('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+DEBUG:yfinance:loaded persistent cookie
+DEBUG:yfinance:reusing cookie
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): query1.finance.yahoo.com:443
+DEBUG:urllib3.connectionpool:https://query1.finance.yahoo.com:443 "GET /v1/test/getcrumb HTTP/1.1" 200 11
+DEBUG:yfinance:crumb = 'QAe8J8jMbR7'
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): query2.finance.yahoo.com:443
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params=frozendict.frozendict({'period1': 1577854800, 'period2': 1740373200, 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'})
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?period1=1577854800&period2=1740373200&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params=frozendict.frozendict({'period1': 1577854800, 'period2': 1740373200, 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'})
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?period1=1577854800&period2=1740373200&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params=frozendict.frozendict({'period1': 1577854800, 'period2': 1740373200, 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'})
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?period1=1577854800&period2=1740373200&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1207
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1207
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1190
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1213
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1201
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 1207
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 only
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 only
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 00:00:00-05:00 only
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params=frozendict.frozendict({'period1': 1577854800, 'period2': 1740373200, 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'})
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?period1=1577854800&period2=1740373200&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2020-09-30 13:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2020-09-30 09:30:00-04:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=10400, id=81282473): is_file, is_inode_meta_mod
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282476): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282541): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282666): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282704): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282808): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81282823): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81283025): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81283069): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81283140): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81283196): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:Resetting dropped connection: query2.finance.yahoo.com
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8159
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8232
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8053
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 9099
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2020-09-30 13:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2020-09-30 09:30:00-04:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): finance.yahoo.com:443
+DEBUG:urllib3.connectionpool:https://finance.yahoo.com:443 "GET /quote/AAPL/history?period1=1582657200&period2=1740423599&interval=1d&frequency=1d&filter=history HTTP/1.1" 301 4597
+DEBUG:urllib3.connectionpool:https://finance.yahoo.com:443 "GET /quote/AAPL/history/?period1=1582657200&period2=1740423599&interval=1d&frequency=1d&filter=history HTTP/1.1" 200 None
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 None
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/AAPL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/AAPL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8195
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/MSFT
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/MSFT?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8273
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/GOOGL
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/GOOGL?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 8070
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:   Entering get()
+DEBUG:yfinance:    Entering _make_request()
+DEBUG:yfinance:url=https://query2.finance.yahoo.com/v8/finance/chart/PLTR
+DEBUG:yfinance:params={'range': '1d', 'interval': '1m', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:     Entering _get_cookie_and_crumb()
+DEBUG:yfinance:cookie_mode = 'basic'
+DEBUG:yfinance:      Entering _get_cookie_and_crumb_basic()
+DEBUG:yfinance:reusing cookie
+DEBUG:yfinance:reusing crumb
+DEBUG:yfinance:      Exiting _get_cookie_and_crumb_basic()
+DEBUG:yfinance:     Exiting _get_cookie_and_crumb()
+DEBUG:urllib3.connectionpool:https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/PLTR?range=1d&interval=1m&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=QAe8J8jMbR7 HTTP/1.1" 200 9188
+DEBUG:yfinance:response code=200
+DEBUG:yfinance:    Exiting _make_request()
+DEBUG:yfinance:   Exiting get()
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2025-02-21 14:30:00 -> 2025-02-21 21:00:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2025-02-21 09:30:00-05:00 -> 2025-02-21 15:59:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:yfinance:Entering download()
+DEBUG:yfinance:Disabling multithreading because DEBUG logging enabled
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['PLTR', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:PLTR: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:PLTR: yfinance received OHLC data: 2020-09-30 13:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:PLTR: OHLC after cleaning: 2020-09-30 09:30:00-04:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:PLTR: OHLC after combining events: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:PLTR: yfinance returning OHLC: 2020-09-30 00:00:00-04:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['AAPL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:AAPL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:AAPL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:AAPL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:AAPL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:AAPL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['MSFT', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:MSFT: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:MSFT: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:MSFT: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:MSFT: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:MSFT: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance: Entering history()
+DEBUG:peewee:('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['GOOGL', 1, 0])
+DEBUG:yfinance:  Entering history()
+DEBUG:yfinance:GOOGL: Yahoo GET parameters: {'period1': '2020-01-01 00:00:00-05:00', 'period2': '2025-02-24 00:00:00-05:00', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+DEBUG:yfinance:GOOGL: yfinance received OHLC data: 2020-01-02 14:30:00 -> 2025-02-21 14:30:00
+DEBUG:yfinance:GOOGL: OHLC after cleaning: 2020-01-02 09:30:00-05:00 -> 2025-02-21 09:30:00-05:00
+DEBUG:yfinance:GOOGL: OHLC after combining events: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:GOOGL: yfinance returning OHLC: 2020-01-02 00:00:00-05:00 -> 2025-02-21 00:00:00-05:00
+DEBUG:yfinance:  Exiting history()
+DEBUG:yfinance: Exiting history()
+DEBUG:yfinance:Exiting download()
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): finance.yahoo.com:443
+DEBUG:urllib3.connectionpool:https://finance.yahoo.com:443 "GET /quote/AAPL/history?period1=1582657200&period2=1740423599&interval=1d&frequency=1d&filter=history HTTP/1.1" 301 4597
+DEBUG:urllib3.connectionpool:https://finance.yahoo.com:443 "GET /quote/AAPL/history/?period1=1582657200&period2=1740423599&interval=1d&frequency=1d&filter=history HTTP/1.1" 200 None
+DEBUG:fsevents:NativeEvent(path="/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py", inode=133746749, flags=11400, id=81289151): is_file, is_inode_meta_mod, is_modified
+DEBUG:fsevents:queue_event <FileModifiedEvent: event_type=modified, src_path='/Users/soonjaekim/Desktop/Developer/FinAnaSys/stream_portfolio.py', is_directory=False>

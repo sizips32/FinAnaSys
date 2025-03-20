@@ -1,6 +1,6 @@
 # 필요한 패키지 임포트 
 import pandas as pd
-import yfinance as yf
+import yfinance as yf  # FinanceDataReader 대신 yfinance 사용
 import numpy_financial as num_finance
 from plotly import graph_objects as go
 from plotly.subplots import make_subplots
@@ -10,7 +10,9 @@ import streamlit as st
 
 class DivAnalysis():
 
-    def __init__(self, ticker : str, data_feed : bool = False, d_return: float = 0.05, years: int =10, growth_year_pick: int = 7, plot: bool = True, save: bool = True):
+    def __init__(self, ticker: str, data_feed: bool = False, d_return: float = 0.05, 
+                 years: int = 10, growth_year_pick: int = 7, plot: bool = True, 
+                 save: bool = True):
         # 입력값 검증 추가
         if not isinstance(ticker, str):
             raise TypeError("ticker는 문자열이어야 합니다.")
@@ -19,78 +21,88 @@ class DivAnalysis():
         if years <= 0:
             raise ValueError("years는 0보다 커야 합니다.")
             
-        self.ticker = ticker
+        self.ticker = ticker.strip()  # 종목 코드에서 공백 제거
         self.data_feed = data_feed
-        self.d_return = d_return # 요구 수익률(할인율)
-        self.years = years # Number of forecast years
-        self.growth_year_choose = growth_year_pick # Past years to calculate average growth rate
-        self.plot = plot # Flag to show plots 
+        self.d_return = d_return  # 요구 수익률(할인율)
+        self.years = years  # Number of forecast years
+        self.growth_year_choose = growth_year_pick  # Past years to calculate average growth rate
+        self.plot = plot  # Flag to show plots 
         
+    def get_data(self):
+        """Yahoo Finance에서 주식 데이터와 배당 정보를 가져옵니다."""
+        try:
+            # yfinance를 사용하여 주식 정보 가져오기
+            stock = yf.Ticker(self.ticker)
+            
+            # 기본 정보 확인
+            try:
+                info = stock.info
+                if not info or len(info) == 0:
+                    st.error(f"{self.ticker}에 대한 기본 정보를 가져올 수 없습니다.")
+                    return False
+            except Exception as e:
+                st.error(f"기본 정보 조회 실패: {str(e)}")
+                st.info("잠시 후 다시 시도해주세요.")
+                return False
+            
+            # 주가 데이터 가져오기
+            try:
+                # 먼저 최근 1년 데이터로 시도
+                price_data = stock.history(period="1y")
+                if price_data.empty:
+                    # 전체 기간으로 다시 시도
+                    price_data = stock.history(period="max")
+                    if price_data.empty:
+                        st.error(f"{self.ticker}에 대한 주가 데이터가 없습니다.")
+                        return False
+                    st.warning("1년치 데이터를 가져올 수 없어 전체 기간의 데이터를 사용합니다.")
+            except Exception as e:
+                st.error(f"주가 데이터 조회 실패: {str(e)}")
+                st.info("잠시 후 다시 시도해주세요.")
+                return False
+            
+            # 배당 데이터 가져오기
+            try:
+                dividends = stock.dividends
+                if len(dividends) > 0:
+                    dividends_data = dividends.to_frame(name='Dividends')
+                    # 배당 데이터를 일별 데이터로 리샘플링
+                    dividends_data = dividends_data.resample('D').ffill()
+                    # price_data의 인덱스에 맞추어 배당 데이터 정리
+                    dividends_data = dividends_data.reindex(price_data.index, method='ffill')
+                    dividends_data = dividends_data.fillna(0)  # NaN 값을 0으로 채우기
+                else:
+                    st.warning(f"{self.ticker}의 배당 데이터가 없습니다.")
+                    # 배당 데이터가 없는 경우 0으로 채운 데이터프레임 생성
+                    dividends_data = pd.DataFrame(
+                        index=price_data.index,
+                        columns=['Dividends'],
+                        data=0
+                    )
+            except Exception as e:
+                st.error(f"배당 데이터 조회 실패: {str(e)}")
+                st.info("잠시 후 다시 시도해주세요.")
+                return False
+            
+            # 데이터 검증
+            if price_data.empty or dividends_data.empty:
+                st.error("데이터 검증 실패: 가격 또는 배당 데이터가 비어있습니다.")
+                return False
+                
+            # 데이터 전처리
+            self.price_data = price_data
+            self.dividends_data = dividends_data
+            
+            return True
+            
+        except Exception as e:
+            st.error(f"데이터 가져오기 실패: {str(e)}")
+            st.info("잠시 후 다시 시도해주세요.")
+            return False
+    
     def statics_analysis(self):
             pass
         
-    def get_data(self):
-        """Fetch and prepare data"""
-        try:
-            ticker_obj = yf.Ticker(self.ticker)
-            dividends_data = pd.DataFrame(ticker_obj.dividends)
-            
-            if dividends_data.empty:
-                raise ValueError(f"{self.ticker}에 대한 배당 데이터가 없습니다.")
-            
-            # 주가 데이터 가져오기
-            price_data = yf.download(self.ticker, start=dividends_data.index[0])
-            
-            # 인덱스 레벨 확인 후 처리
-            if isinstance(price_data.columns, pd.MultiIndex):
-                price_data = price_data.droplevel(level=1, axis=1)
-            elif price_data.columns.nlevels > 1:
-                raise ValueError("Unexpected MultiIndex structure in price_data.")
-            
-            # Add year columns
-            dividends_data['year'] = dividends_data.index.year
-            yearly_dividends_sum = dividends_data.groupby('year')['Dividends'].sum().reset_index(name='dividend sum').set_index('year')
-            yearly_dividends_count = dividends_data.groupby('year').size().reset_index(name='dividend count').set_index('year')
-            
-            most_common_value = yearly_dividends_count['dividend count'].value_counts().idxmax()
-            most_common_ratio = yearly_dividends_count['dividend count'].value_counts(normalize=True)[most_common_value]
-            
-            # 비중이 80% 이상일 경우와 그렇지 않은 경우를 나눠서 처리 
-            if most_common_ratio >=0.8:
-                # 만약 데이터프레임의 마지막에 해당하는 년도에 받은 배당이 부족하다면
-                if yearly_dividends_count['dividend count'].iloc[-1] < most_common_value:
-                    # 처리 로직 1 : 배당 지급이 일정하다고 가정하고 부족한 배당을 예상
-                    yearly_dividends_sum.iloc[-1, yearly_dividends_sum.columns.get_loc('dividend sum')] = dividends_data['Dividends'].iloc[-1] * most_common_value
-                else: # 연배당인 경우
-                    yearly_dividends_sum.loc[yearly_dividends_sum.index[-1], 'dividend sum'] = yearly_dividends_sum['dividend sum'].iloc[-2]
-                    
-            else:
-                # 처리 로직 2: 배당 지급의 consistency가 적으므로 이전 년도의 배당으로 대체 
-                yearly_dividends_sum.loc[yearly_dividends_sum.index[-1], 'dividend sum'] = yearly_dividends_sum['dividend sum'].iloc[-2]
-        
-            # Merge Dividend Sum data and Close price data for Dividend Yield & Price Combo chart
-            data_close = price_data['Close'].reset_index()
-            yearly_dividends = yearly_dividends_sum.reset_index()
-            data_close['year'] = pd.to_datetime(data_close['Date']).dt.year
-            merged_df = pd.merge(data_close, yearly_dividends, on='year', how='left')
-            
-            # 날짜별 배당수익률 열 추가하기
-            merged_df['dividend yield'] = merged_df['dividend sum'] / merged_df['Close']
-            
-            merged_df.set_index('year', inplace=True)
-            
-            # 데이터 딕셔너리 만들기
-            data_dict = {
-                        'yearly_dividends' : yearly_dividends_sum,
-                        'dividend_count' : yearly_dividends_count,
-                        'price_dividend_combo' : merged_df, 
-            }
-            
-            return data_dict
-        except Exception as e:
-            print(f"데이터 가져오기 실패: {str(e)}")
-            return None
-    
     def cal_sum_of_fcf(self, recent_dividend, expected_growth_rate, cost, cost_discount_rate=0):
         # 리스트 컴프리헨션 사용으로 성능 개선
         future_dividend_list = []
@@ -126,11 +138,11 @@ class DivAnalysis():
             return self._metrics_cache[cache_key]
         
         """Get Data"""
-        yearly_data = data_dict['yearly_dividends']
-        dividend_price_data = data_dict['price_dividend_combo']
+        yearly_data = self.dividends_data
+        dividend_price_data = self.price_data
         
         """Calculate FCF and NPV & IRR"""
-        yearly_data['growth rate'] = yearly_data['dividend sum'].pct_change() # consecutive growth count 및 plotting 에서 필요하기 때문에 열을 생성해줘야함
+        yearly_data['growth rate'] = yearly_data['Dividends'].pct_change() # consecutive growth count 및 plotting 에서 필요하기 때문에 열을 생성해줘야함
         average_growth_rate = yearly_data['growth rate'].median()
         chosen_year_average_growth_rate = yearly_data['growth rate'].iloc[-self.growth_year_choose:].median()        
         
@@ -138,7 +150,7 @@ class DivAnalysis():
         expected_growth_rate = average_growth_rate if use_all else chosen_year_average_growth_rate
         
         # 최근 배당금과 주가 가져오기 
-        recent_dividend = yearly_data['dividend sum'].iloc[-1]
+        recent_dividend = yearly_data['Dividends'].iloc[-1]
         cost = dividend_price_data['Close'].iloc[-1]
         
         # FCF 계산 
@@ -155,19 +167,19 @@ class DivAnalysis():
         
         saftey_margin_lv1 = self.cal_sum_of_fcf(recent_dividend=recent_dividend, cost=cost, expected_growth_rate=0)
         sum_of_lv1 = saftey_margin_lv1['sum_fcf'] # 배당성장률이 0%인 경우를 가정 
-        safety_margin_lv2 = self.cal_sum_of_fcf(recent_dividend=yearly_data['dividend sum'].min(), cost=cost, expected_growth_rate=0)
+        safety_margin_lv2 = self.cal_sum_of_fcf(recent_dividend=yearly_data['Dividends'].min(), cost=cost, expected_growth_rate=0)
         sum_of_lv2 = safety_margin_lv2['sum_fcf'] # 시작 배당을 역사적으로 가장 낮은 배당 & 배당성장률 0% 
-        safety_margin_lv3 = self.cal_sum_of_fcf(recent_dividend=yearly_data['dividend sum'].min(), cost=cost, expected_growth_rate=0, cost_discount_rate=0.2)
+        safety_margin_lv3 = self.cal_sum_of_fcf(recent_dividend=yearly_data['Dividends'].min(), cost=cost, expected_growth_rate=0, cost_discount_rate=0.2)
         sum_of_lv3 = safety_margin_lv3['sum_fcf'] # 시작 배당을 min 배당 & 성장률 0% & 주가 회수를 discount
         
         """Calculate Other Metrics"""
-        max_yield = dividend_price_data['dividend yield'].max()
-        min_yield = dividend_price_data['dividend yield'].min()
-        avg_yield = dividend_price_data['dividend yield'].mean()
-        cur_yield = dividend_price_data['dividend yield'].iloc[-1]
+        max_yield = dividend_price_data['Dividends'].max()
+        min_yield = dividend_price_data['Dividends'].min()
+        avg_yield = dividend_price_data['Dividends'].mean()
+        cur_yield = dividend_price_data['Dividends'].iloc[-1]
         
         # Calcaulte Consecutive Dividend paid and growth
-        yearly_data['dividend paid'] = yearly_data['dividend sum'].notnull()
+        yearly_data['dividend paid'] = yearly_data['Dividends'].notnull()
         yearly_data['consecutive dividend count'] = yearly_data['dividend paid'].groupby((yearly_data['dividend paid'] != yearly_data['dividend paid'].shift()).cumsum()).cumsum()
         consecutive_dividend_count = yearly_data['consecutive dividend count'].iloc[-1]
         
@@ -203,10 +215,10 @@ class DivAnalysis():
         # 차트 데이터 준비
         yield_price_x = dividend_price_data['Date']
         yield_price_y = dividend_price_data['Close']
-        yield_price_y2 = dividend_price_data['dividend yield']
+        yield_price_y2 = dividend_price_data['Dividends']
         
         yearly_dividend_history_x = yearly_growth_history_x = yearly_data.index
-        yearly_dividend_history_y = yearly_data['dividend sum']
+        yearly_dividend_history_y = yearly_data['Dividends']
         yearly_growth_history_y = yearly_data['growth rate']
         
         sum_fcf = round(sum_of_discounted_future_cashflow, 2)
@@ -378,6 +390,7 @@ class DivAnalysis():
         
         return metrics
 
+<<<<<<< HEAD
 if __name__ == '__main__':
     st.title("배당주 분석 대시보드")
     
@@ -443,3 +456,184 @@ if __name__ == '__main__':
             종합적으로, FCF가 높고 NPV가 양수이며 IRR이 요구 수익률을 상회하고, 안전마진이 충분한 기업은 배당 투자에 유리합니다. 각 지표는 상호 보완적이며, 모든 지표를 함께 고려하여 투자 결정을 내리는 것이 바람직합니다.
             """
         )
+=======
+def run_dividend_analysis():
+    st.title('배당금 분석 대시보드')
+    
+    with st.expander("📈 배당금 분석", expanded=True):
+        try:
+            stock = yf.Ticker(ticker)
+            stock_info = stock.info
+            
+            if stock_info.get('dividendYield') is None:
+                st.warning("배당금 정보가 없습니다.")
+                return
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("기본 정보")
+                st.write(f"종목명: {stock_info.get('longName', '-')}")
+                st.write(f"섹터: {stock_info.get('sector', '-')}")
+                st.write(f"산업: {stock_info.get('industry', '-')}")
+            
+            with col2:
+                st.subheader("배당 정보")
+                annual_dividend = stock_info['dividendYield'] * stock_info['previousClose'] / 100
+                current_price = stock_info['previousClose']
+                dividend_yield = (annual_dividend / current_price) * 100
+                
+                st.metric("연간 배당금", f"${annual_dividend:.2f}")
+                st.metric("배당률", f"{dividend_yield:.2f}%")
+            
+            with st.expander("📊 주가 및 배당금 히스토리", expanded=False):
+                st.dataframe(stock.history(period="max").tail(10))
+                st.line_chart(stock.history(period="max")['Close'])
+            
+        except Exception as e:
+            st.error(f"에러 발생: {str(e)}")
+
+if __name__ == "__main__":
+    st.set_page_config(
+        page_title="배당주 분석 대시보드",
+        page_icon="📈",
+        layout="wide"
+    )
+    
+    # 메인 타이틀과 설명
+    st.title("📊 배당주 분석 대시보드")
+    
+    # 기본 설명을 expander로 변경
+    with st.expander("📌 대시보드 사용 가이드", expanded=False):
+        st.markdown("""
+        이 대시보드는 주식의 배당 관련 정보를 분석하여 투자 의사결정을 돕습니다.
+        
+        ### 🔍 사용 방법
+        1. 사이드바에서 분석하고자 하는 주식의 티커를 입력하세요.
+        2. 필요한 경우 상세 설정(요구 수익률, 분석 기간 등)을 조정하세요.
+        3. '분석 시작' 버튼을 클릭하여 결과를 확인하세요.
+        
+        ### 💡 티커 입력 예시
+        - 한국 주식: 종목코드.KS (예: 005930.KS)
+        - 미국 주식: 심볼 (예: AAPL)
+        """)
+    
+    # 지표 설명을 expander로 변경
+    with st.expander("📊 배당 분석 지표 설명", expanded=False):
+        st.markdown("""
+        ### 🌱 성장 지표
+        - **평균 성장률**: 기업의 배당금 성장 추세를 보여줍니다.
+        - **최근 N년 평균 성장률**: 최근 성과를 중점적으로 반영합니다.
+        - **연속 배당 성장/지급**: 배당의 안정성을 나타냅니다.
+        
+        ### 💰 수익률 지표
+        - **현재/평균 배당수익률**: 투자 수익의 기대치를 보여줍니다.
+        - **최대/최소 배당수익률**: 배당 수익의 변동 범위를 나타냅니다.
+        
+        ### 💵 가치평가 지표
+        - **FCF 합계**: 기업의 실질적인 현금 창출 능력을 보여줍니다.
+        - **NPV/IRR**: 투자의 수익성을 평가합니다.
+        
+        ### 🛡️ 안전마진 지표
+        - **Level 1**: 보수적 가정의 안전마진
+        - **Level 2**: 현실적 가정의 안전마진
+        - **Level 3**: 비관적 가정의 안전마진
+        """)
+    
+    # 투자 전략 설명을 expander로 변경
+    with st.expander("📈 투자 전략 가이드", expanded=False):
+        st.markdown("""
+        ### 💡 효과적인 배당주 투자 전략
+        
+        1. **성장성 확인**
+           - 평균 성장률과 최근 성장률 비교
+           - 연속 배당 기록 확인
+        
+        2. **수익성 평가**
+           - 현재 배당수익률과 과거 평균 비교
+           - FCF와 배당금 지급 능력 분석
+        
+        3. **안전성 검토**
+           - 안전마진 레벨별 분석
+           - NPV와 IRR을 통한 투자 가치 평가
+        
+        4. **매수 시점 결정**
+           - 안전마진 대비 현재 주가 비교
+           - 배당수익률 트렌드 분석
+        """)
+    
+    # 사이드바 구성
+    with st.sidebar:
+        st.header("⚙️ 분석 설정")
+        
+        # 티커 입력
+        ticker = st.text_input(
+            "티커 심볼을 입력하세요",
+            value="005930.KS",
+            help="- 한국 주식: 종목코드.KS (예: 005930.KS)\n- 미국 주식: 심볼 (예: AAPL)"
+        )
+        
+        # 분석 옵션
+        with st.expander("🎯 상세 설정", expanded=False):
+            d_return = st.slider(
+                "요구 수익률 (%)",
+                min_value=1,
+                max_value=20,
+                value=5,
+                help="투자에 대한 기대 수익률을 설정합니다."
+            )
+            
+            years = st.slider(
+                "분석 기간 (년)",
+                min_value=1,
+                max_value=20,
+                value=10,
+                help="과거 데이터 분석 기간을 설정합니다."
+            )
+            
+            growth_years = st.slider(
+                "성장률 계산 기간 (년)",
+                min_value=1,
+                max_value=10,
+                value=7,
+                help="평균 성장률을 계산할 기간을 설정합니다."
+            )
+        
+        # 분석 시작 버튼
+        if st.button("📊 분석 시작", use_container_width=True):
+            try:
+                with st.spinner('데이터를 분석중입니다...'):
+                    analysis = DivAnalysis(
+                        ticker=ticker,
+                        d_return=d_return/100,
+                        years=years,
+                        growth_year_pick=growth_years
+                    )
+                    
+                    # 메인 화면에 분석 결과 표시
+                    with st.expander("📈 기본 정보", expanded=True):
+                        stock = yf.Ticker(ticker)
+                        info = stock.info
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.subheader("기업 정보")
+                            st.write(f"종목명: {info.get('longName', '-')}")
+                            st.write(f"섹터: {info.get('sector', '-')}")
+                            st.write(f"산업: {info.get('industry', '-')}")
+                            st.write(f"국가: {info.get('country', '-')}")
+                        
+                        with col2:
+                            st.subheader("시장 정보")
+                            st.write(f"현재가: ${info.get('currentPrice', '-'):,.2f}")
+                            st.write(f"시가총액: ${info.get('marketCap', 0):,.0f}")
+                            st.write(f"52주 최고: ${info.get('fiftyTwoWeekHigh', '-'):,.2f}")
+                            st.write(f"52주 최저: ${info.get('fiftyTwoWeekLow', '-'):,.2f}")
+                    
+                    # 상세 분석 결과 표시
+                    analysis.display_streamlit_analysis()
+                    
+            except Exception as e:
+                st.error(f"분석 중 오류가 발생했습니다: {str(e)}")
+                st.info("올바른 티커를 입력했는지 확인해주세요.")
+>>>>>>> 29dfec2 (업데이트)
