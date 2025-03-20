@@ -1,5 +1,5 @@
 import streamlit as st
-import yfinance as yf
+import FinanceDataReader as fdr
 import pandas as pd
 import numpy as np
 from pypfopt import (
@@ -45,7 +45,7 @@ st.sidebar.title("포트폴리오 분석 설정 🛠️")
 # 기본 입력 파라미터
 tickers = st.sidebar.text_input(
     "종목 코드 입력 (쉼표로 구분) 📝",
-    "AAPL, MSFT, GOOGL, AMZN"  # 기본 예시 종목
+    "005930, 035420, 051910, 035720"  # 기본 예시 종목 (삼성전자, NAVER, LG화학,카카오)
 )
 start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2020-01-01"))
 end_date = st.sidebar.date_input("End Date", value=pd.Timestamp.now().date())
@@ -174,58 +174,92 @@ hedge_strategy_explanation = """
 """
 
 def fetch_data(tickers_list, start_date, end_date):
-    """데이터 가져오기 (미국주식 전용)"""
+    """
+    FinanceDataReader를 사용하여 주가 데이터를 가져오는 함수
+    
+    Parameters:
+    tickers_list (list): 종목 코드 리스트
+    start_date (datetime): 시작일
+    end_date (datetime): 종료일
+    
+    Returns:
+    tuple: (prices_df, returns_df) - 가격 데이터프레임과 수익률 데이터프레임
+    """
     try:
         if not tickers_list or len(tickers_list) == 0:
-            raise ValueError("At least 1 ticker required")
+            raise ValueError("종목 코드를 하나 이상 입력해주세요.")
             
         valid_tickers = []
         data_frames = []
         
+        # KRX 종목 목록 가져오기
+        krx = fdr.StockListing('KRX')
+        
+        # 컬럼명 확인 및 처리
+        symbol_column = None
+        name_column = None
+        
+        if 'Symbol' in krx.columns:
+            symbol_column = 'Symbol'
+            name_column = 'Name'
+        elif 'Code' in krx.columns:
+            symbol_column = 'Code'
+            name_column = 'Name'
+        elif '종목코드' in krx.columns:
+            symbol_column = '종목코드'
+            name_column = '종목명'
+            
+        if symbol_column is None:
+            raise ValueError("주식 시장 데이터 형식이 올바르지 않습니다.")
+        
         for ticker in tickers_list:
             t = ticker.strip().upper()
             try:
-                # 수정된 부분: Ticker 객체 생성 방식 변경
-                yf_ticker = yf.Ticker(t)
-                temp_data = yf_ticker.history(
-                    start=start_date,
-                    end=end_date,
-                    auto_adjust=True  # 자동으로 Adj Close 적용
-                )
+                # 한국 주식인지 확인
+                is_korean = t in krx[symbol_column].values
                 
-                if not temp_data.empty:
+                if is_korean:
+                    # 한국 주식 데이터 가져오기
+                    temp_data = fdr.DataReader(t, start_date, end_date)
+                    company_name = krx[krx[symbol_column] == t][name_column].iloc[0]
+                else:
+                    # 미국 주식 데이터 가져오기
+                    temp_data = fdr.DataReader(t, start_date, end_date)
+                    company_name = t  # 미국 주식은 심볼을 회사명으로 사용
+                
+                if temp_data is not None and not temp_data.empty:
                     if 'Close' in temp_data.columns:
-                        close_series = temp_data['Close'].rename(t)
+                        close_series = temp_data['Close'].rename(f"{company_name} ({t})")
                         data_frames.append(close_series)
                         valid_tickers.append(t)
                     else:
-                        raise ValueError(f"No Close price for {t}")
+                        st.warning(f"{t}의 종가 데이터가 없습니다.")
                 else:
-                    st.warning(f"No data found for {t}, skipping")
+                    st.warning(f"{t}의 데이터를 찾을 수 없습니다.")
                     
             except Exception as e:
-                st.warning(f"Failed to download {t}: {str(e)}")
+                st.warning(f"{t} 데이터 다운로드 실패: {str(e)}")
         
         if not valid_tickers:
-            raise ValueError("No valid tickers found")
+            raise ValueError("유효한 종목 코드가 없습니다.")
             
         data = pd.concat(data_frames, axis=1)
         data = data.ffill().bfill().dropna(how='all', axis=1)
         
         if data.empty:
-            raise ValueError("No valid data after processing")
+            raise ValueError("처리 후 유효한 데이터가 없습니다.")
             
         returns = data.pct_change().dropna()
         
         if len(returns) < 252:
-            st.warning("Insufficient data (min 1 year required)")
+            st.warning("데이터가 부족합니다 (최소 1년 필요)")
             return None, None
             
         return data, returns
         
     except Exception as e:
-        st.error(f"🚨 Data Error: {str(e)}")
-        st.error("Troubleshooting:\n1. Check internet connection\n2. Verify ticker validity\n3. Try smaller date range")
+        st.error(f"🚨 데이터 오류: {str(e)}")
+        st.error("문제 해결 방법:\n1. 인터넷 연결 확인\n2. 종목 코드 확인\n3. 날짜 범위 조정")
         return None, None
 
 def calculate_risk_metrics(returns, weights=None):
@@ -323,7 +357,7 @@ def simulate_dynamic_hedge(_portfolio_returns, window_size, params):
 def fetch_exchange_rate():
     """달러/원 환율 정보 가져오기"""
     try:
-        usd_krw = yf.download("KRW=X", period="1d")['Close'].iloc[-1]
+        usd_krw = fdr.DataReader("USDKRW=X", start_date, end_date)['Close'].iloc[-1]
         return usd_krw
     except Exception as e:
         st.warning("환율 정보를 가져오는데 실패했습니다. 기본값 1,300원을 사용합니다.")

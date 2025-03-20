@@ -1,7 +1,10 @@
-## Source: @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
+# Source: @DeepCharts Youtube Channel (https://www.youtube.com/@DeepCharts)
+
+# NOTE: Set yfinance to the following version to get chart working: 
+# "pip install yfinance==0.2.40"
 
 import streamlit as st
-import yfinance as yf
+import FinanceDataReader as fdr
 import pandas as pd
 import plotly.graph_objects as go
 import ollama
@@ -9,22 +12,24 @@ import tempfile
 import base64
 import os
 import numpy as np
-from datetime import datetime
+import yfinance as yf
+from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
 st.set_page_config(layout="wide")
 st.title("AI 기반 재무-기술적 분석 시스템")
-st.markdown("""
-### 시스템 소개
-이 시스템은 주식 시장 데이터를 분석하여 투자 의사결정을 지원하는 AI 기반 분석 도구입니다.
 
-#### 주요 기능
-1. 실시간 주가 데이터 분석
-2. 기술적 지표 기반 매매 시그널
-3. AI 기반 투자 추천
-4. 재무제표 분석
-""")
+with st.expander("📚 시스템 소개"):
+    st.markdown("""
+    이 시스템은 주식 시장 데이터를 분석하여 투자 의사결정을 지원하는 AI 기반 분석 도구입니다.
+
+    #### 주요 기능
+    1. 실시간 주가 데이터 분석
+    2. 기술적 지표 기반 매매 시그널
+    3. AI 기반 투자 추천
+    4. 재무제표 분석
+    """)
 
 # 패키지 버전 검증 로직 수정
 def verify_package_versions():
@@ -104,20 +109,23 @@ st.markdown("""
    - 0-100 사이 값, 80이상 과매수, 20이하 과매도
    - RSI와 유사하나 거래량 반영으로 더 정확
    - 다이버전스 발생 시 추세 전환 신호
-
-### 분석 전략
-1. **추세 분석**
-   - SMA, MACD로 주요 추세 파악
-   - 볼린저 밴드로 변동성 범위 확인
-
-2. **모멘텀 분석**
-   - RSI, MFI로 과매수/과매도 판단
-   - 스퀴즈 모멘텀으로 강한 추세 시작점 포착
-
-3. **거래량 분석**
-   - VWAP으로 기관 매매 동향 파악
-   - MFI로 자금 흐름 강도 확인
 """)
+
+with st.expander("📈 분석 전략"):
+    st.markdown("""
+    ### 분석 전략
+    1. **추세 분석**
+       - SMA, MACD로 주요 추세 파악
+       - 볼린저 밴드로 변동성 범위 확인
+
+    2. **모멘텀 분석**
+       - RSI, MFI로 과매수/과매도 판단
+       - 스퀴즈 모멘텀으로 강한 추세 시작점 포착
+
+    3. **거래량 분석**
+       - VWAP으로 기관 매매 동향 파악
+       - MFI로 자금 흐름 강도 확인
+    """)
 
 class AnalysisError(Exception):
     """분석 과정에서 발생하는 사용자 정의 예외"""
@@ -136,33 +144,98 @@ def handle_error(error, context=""):
 def fetch_stock_data(symbol, period):
     """주식 데이터를 가져오는 함수"""
     try:
-        ticker = yf.Ticker(symbol)
-        data = ticker.history(period=period)
+        # 기간에 따른 시작일 계산
+        end_date = datetime.now()
+        if period == "1mo":
+            start_date = end_date - timedelta(days=30)
+        elif period == "3mo":
+            start_date = end_date - timedelta(days=90)
+        elif period == "6mo":
+            start_date = end_date - timedelta(days=180)
+        elif period == "1y":
+            start_date = end_date - timedelta(days=365)
+        elif period == "2y":
+            start_date = end_date - timedelta(days=730)
+        elif period == "5y":
+            start_date = end_date - timedelta(days=1825)
+        else:  # max
+            start_date = end_date - timedelta(days=3650)  # 약 10년
+
+        # 한국 주식 여부 확인
+        krx = fdr.StockListing('KRX')
+        is_korean = False
         
+        # KRX 데이터프레임의 컬럼명 확인 및 처리
+        symbol_column = None
+        name_column = None
+        
+        if 'Symbol' in krx.columns:
+            symbol_column = 'Symbol'
+            name_column = 'Name'
+        elif 'Code' in krx.columns:
+            symbol_column = 'Code'
+            name_column = 'Name'
+        elif '종목코드' in krx.columns:
+            symbol_column = '종목코드'
+            name_column = '종목명'
+            
+        if symbol_column is None:
+            st.error("주식 시장 데이터 형식이 올바르지 않습니다.")
+            return None
+            
+        is_korean = symbol in krx[symbol_column].values
+
+        # 미국 주식 여부 확인
+        nasdaq = fdr.StockListing('NASDAQ')
+        nyse = fdr.StockListing('NYSE')
+        
+        # NASDAQ/NYSE 데이터프레임의 컬럼명 확인 및 처리
+        us_symbol_column = 'Symbol' if 'Symbol' in nasdaq.columns else 'Code'
+        us_name_column = 'Name' if 'Name' in nasdaq.columns else 'Symbol'
+        
+        is_us = (symbol in nasdaq[us_symbol_column].values or 
+                symbol in nyse[us_symbol_column].values)
+
+        if not (is_korean or is_us):
+            st.error(f"{symbol}은(는) 유효한 종목코드가 아닙니다.")
+            return None
+
+        # 주식 데이터 가져오기
+        if is_korean:
+            market_type = "KRX"
+            data = fdr.DataReader(symbol, start_date, end_date)
+            company_name = krx[krx[symbol_column] == symbol][name_column].iloc[0]
+        else:
+            market_type = "US"
+            data = fdr.DataReader(symbol, start_date, end_date)
+            if symbol in nasdaq[us_symbol_column].values:
+                company_name = nasdaq[nasdaq[us_symbol_column] == symbol][us_name_column].iloc[0]
+            else:
+                company_name = nyse[nyse[us_symbol_column] == symbol][us_name_column].iloc[0]
+
         if data.empty:
             st.error(f"{symbol}에 대한 데이터를 찾을 수 없습니다.")
             return None
-            
-        # 거래량이 0인 행 제거 전에 데이터 존재 여부 확인
+
+        # 거래량이 0인 행 제거
         if 'Volume' not in data.columns:
             st.error("거래량 데이터가 존재하지 않습니다.")
             return None
-            
+
         data = data[data['Volume'] > 0]
-        
-        # VWAP 계산 전에 필요한 컬럼 존재 여부 확인
-        required_columns = ['High', 'Low', 'Close', 'Volume']
-        if not all(col in data.columns for col in required_columns):
-            st.error("필요한 가격 데이터가 누락되었습니다.")
-            return None
-            
+
+        # VWAP 계산
         data['VWAP'] = (data['High'] + data['Low'] + data['Close']) / 3
         data['VWAP'] = (data['VWAP'] * data['Volume']).cumsum() / data['Volume'].cumsum()
-        
+
+        # 시장 정보와 회사명 추가
+        data.attrs['market_type'] = market_type
+        data.attrs['company_name'] = company_name
+
         return data
-        
+
     except Exception as e:
-        st.error(f"데이터 가져오기 실패: {str(e)}")
+        st.error(f"데이터 가져오기 실패: {str(e)}\n상세 에러: {type(e).__name__}")
         return None
 
 def calculate_technical_indicators(data, indicator):
@@ -285,78 +358,202 @@ class TechnicalAnalysis:
 # 메인 코드에서 사용
 technical_analyzer = TechnicalAnalysis()
 
-def get_financial_metrics(ticker):
+def get_yahoo_symbol(symbol, market_type):
+    """Yahoo Finance 심볼로 변환"""
+    if market_type == "KRX":
+        try:
+            krx = fdr.StockListing('KRX')
+            market_column = None
+            symbol_column = None
+            
+            # KRX 데이터프레임의 컬럼명 확인
+            if 'Market' in krx.columns:
+                market_column = 'Market'
+            elif 'SecuGroup' in krx.columns:
+                market_column = 'SecuGroup'
+            elif '시장구분' in krx.columns:
+                market_column = '시장구분'
+                
+            if 'Symbol' in krx.columns:
+                symbol_column = 'Symbol'
+            elif 'Code' in krx.columns:
+                symbol_column = 'Code'
+            elif '종목코드' in krx.columns:
+                symbol_column = '종목코드'
+                
+            if market_column and symbol_column:
+                stock_info = krx[krx[symbol_column] == symbol]
+                if not stock_info.empty:
+                    market = stock_info[market_column].iloc[0]
+                    if any(kosdaq in str(market).upper() for kosdaq in ['KOSDAQ', 'KOSDAQ', '코스닥']):
+                        return f"{symbol}.KQ"
+            
+            return f"{symbol}.KS"  # 기본값으로 KOSPI 처리
+            
+        except Exception as e:
+            st.warning(f"시장 구분 확인 중 오류 발생: {str(e)}")
+            return f"{symbol}.KS"  # 에러 발생 시 기본값으로 KOSPI 처리
+            
+    return symbol  # US stocks
+
+def get_financial_metrics(symbol):
     """기업 재무 지표 수집 함수"""
     try:
-        info = ticker.info
+        # 기본 정보 가져오기
+        krx = fdr.StockListing('KRX')
+        is_korean = False
         
-        # 재무제표 데이터 가져오기
-        try:
-            financials = ticker.income_stmt
-            balance_sheet = ticker.balance_sheet
-            cashflow = ticker.cashflow
-        except Exception as e:
-            st.warning(f"재무제표 데이터 가져오기 실패: {str(e)}")
-            financials = pd.DataFrame()
-            balance_sheet = pd.DataFrame()
-            cashflow = pd.DataFrame()
+        # KRX 데이터프레임의 컬럼명 확인 및 처리
+        symbol_column = None
+        name_column = None
         
-        # 최신 재무제표 날짜 확인
-        try:
-            latest_financial_date = financials.index[0].strftime('%Y-%m-%d') if not financials.empty else '날짜 없음'
-            latest_balance_date = balance_sheet.index[0].strftime('%Y-%m-%d') if not balance_sheet.empty else '날짜 없음'
-            latest_cashflow_date = cashflow.index[0].strftime('%Y-%m-%d') if not cashflow.empty else '날짜 없음'
-        except Exception as e:
-            st.warning(f"날짜 데이터 처리 중 오류: {str(e)}")
-            latest_financial_date = '날짜 없음'
-            latest_balance_date = '날짜 없음'
-            latest_cashflow_date = '날짜 없음'
+        if 'Symbol' in krx.columns:
+            symbol_column = 'Symbol'
+            name_column = 'Name'
+        elif 'Code' in krx.columns:
+            symbol_column = 'Code'
+            name_column = 'Name'
+        elif '종목코드' in krx.columns:
+            symbol_column = '종목코드'
+            name_column = '종목명'
+            
+        if symbol_column is None:
+            st.error("주식 시장 데이터 형식이 올바르지 않습니다.")
+            return None
+            
+        is_korean = symbol in krx[symbol_column].values
         
-        # 현금흐름 관련 지표
+        # 한국 주식인 경우
+        if is_korean:
+            company_info = krx[krx[symbol_column] == symbol].iloc[0]
+            sector = company_info.get('Sector', 'N/A')
+            industry = company_info.get('Industry', 'N/A')
+            market_cap = company_info.get('MarketCap', None)
+            market_type = "KRX"
+            
+        # 미국 주식인 경우
+        else:
+            nasdaq = fdr.StockListing('NASDAQ')
+            nyse = fdr.StockListing('NYSE')
+            
+            if symbol in nasdaq['Symbol'].values:
+                company_info = nasdaq[nasdaq['Symbol'] == symbol].iloc[0]
+                market_type = "NASDAQ"
+            elif symbol in nyse['Symbol'].values:
+                company_info = nyse[nyse['Symbol'] == symbol].iloc[0]
+                market_type = "NYSE"
+            else:
+                st.error(f"{symbol}은(는) 지원하지 않는 종목입니다.")
+                return None
+                
+            sector = company_info.get('Sector', 'N/A')
+            industry = company_info.get('Industry', 'N/A')
+            market_cap = company_info.get('MarketCap', None)
+
+        # Yahoo Finance에서 재무제표 데이터 가져오기
         try:
-            operating_cashflow = cashflow.loc[cashflow.index[0], 'Operating Cash Flow'] if not cashflow.empty else None
-            free_cashflow = cashflow.loc[cashflow.index[0], 'Free Cash Flow'] if not cashflow.empty else None
-            capital_expenditure = cashflow.loc[cashflow.index[0], 'Capital Expenditure'] if not cashflow.empty else None
+            yahoo_symbol = get_yahoo_symbol(symbol, market_type)
+            ticker = yf.Ticker(yahoo_symbol)
+            
+            # 먼저 info 데이터 가져오기 시도
+            try:
+                info = ticker.info
+                if not info:
+                    raise ValueError("Yahoo Finance info 데이터가 비어있습니다.")
+            except Exception as info_error:
+                st.warning(f"기본 정보 조회 실패: {str(info_error)}")
+                info = {}
+            
+            # 재무제표 데이터 가져오기 시도
+            try:
+                # 최근 4분기 재무제표 데이터 가져오기
+                financials = ticker.quarterly_financials
+                balance_sheet = ticker.quarterly_balance_sheet
+                
+                if not financials.empty:
+                    # 당기순이익 가져오기
+                    net_income = None
+                    try:
+                        if 'Net Income' in financials.index:
+                            net_income = financials.loc['Net Income'].iloc[0]
+                        elif 'Net Income Common Stockholders' in financials.index:
+                            net_income = financials.loc['Net Income Common Stockholders'].iloc[0]
+                    except Exception as e:
+                        st.warning(f"당기순이익 데이터 조회 실패: {str(e)}")
+                
+                if not balance_sheet.empty:
+                    # 자기자본 가져오기
+                    total_equity = None
+                    try:
+                        if 'Total Stockholder Equity' in balance_sheet.index:
+                            total_equity = balance_sheet.loc['Total Stockholder Equity'].iloc[0]
+                        elif 'Stockholders Equity' in balance_sheet.index:
+                            total_equity = balance_sheet.loc['Stockholders Equity'].iloc[0]
+                    except Exception as e:
+                        st.warning(f"자기자본 데이터 조회 실패: {str(e)}")
+                
+            except Exception as fin_error:
+                st.warning(f"재무제표 데이터 조회 실패: {str(fin_error)}")
+                financials = pd.DataFrame()
+                balance_sheet = pd.DataFrame()
+            
+            # 기본 지표 계산
+            per = info.get('forwardPE', None)
+            pbr = info.get('priceToBook', None)
+            eps = info.get('trailingEPS', None)
+            bps = None  # Yahoo Finance에서는 직접 제공하지 않음
+            if eps is not None and pbr is not None and per is not None:
+                bps = eps * pbr / per
+            dividend_yield = info.get('dividendYield', None)
+            if dividend_yield:
+                dividend_yield = dividend_yield * 100  # 백분율로 변환
+                
+            # 시가총액이 없는 경우 Yahoo Finance에서 가져오기
+            if market_cap is None:
+                market_cap = info.get('marketCap', None)
+                
         except Exception as e:
-            st.warning(f"현금흐름 데이터 처리 중 오류: {str(e)}")
-            operating_cashflow = None
-            free_cashflow = None
-            capital_expenditure = None
+            st.warning(f"Yahoo Finance 데이터 가져오기 실패: {str(e)}")
+            per = None
+            pbr = None
+            eps = None
+            bps = None
+            dividend_yield = None
         
-        # 재무상태표 지표
+        # 최근 1년간의 주가 데이터
         try:
-            total_debt = balance_sheet.loc[balance_sheet.index[0], 'Total Debt'] if not balance_sheet.empty else None
-            total_assets = balance_sheet.loc[balance_sheet.index[0], 'Total Assets'] if not balance_sheet.empty else None
-            current_assets = balance_sheet.loc[balance_sheet.index[0], 'Total Current Assets'] if not balance_sheet.empty else None
-            current_liabilities = balance_sheet.loc[balance_sheet.index[0], 'Total Current Liabilities'] if not balance_sheet.empty else None
-        except Exception as e:
-            st.warning(f"재무상태표 데이터 처리 중 오류: {str(e)}")
-            total_debt = None
-            total_assets = None
-            current_assets = None
-            current_liabilities = None
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=365)
+            stock_data = fdr.DataReader(symbol, start_date, end_date)
+            
+            if stock_data.empty:
+                st.warning("주가 데이터를 가져올 수 없습니다.")
+                current_price = None
+                avg_volume = None
+            else:
+                current_price = stock_data['Close'].iloc[-1]
+                avg_volume = stock_data['Volume'].mean()
+        except Exception as price_error:
+            st.warning(f"주가 데이터 조회 실패: {str(price_error)}")
+            current_price = None
+            avg_volume = None
         
         metrics = {
-            'sector': info.get('sector', 'N/A'),
-            'industry': info.get('industry', 'N/A'),
-            'marketCap': info.get('marketCap', None),
-            'priceToSalesTrailing12Months': info.get('priceToSalesTrailing12Months', None),
-            'dividendYield': info.get('dividendYield', None),
-            'debtRatio': info.get('debtRatio', None),
-            'currentRatio': info.get('currentRatio', None),
-            'totalDebt': total_debt,
-            'totalAssets': total_assets,
-            'currentAssets': current_assets,
-            'currentLiabilities': current_liabilities,
-            'cashflow': {
-                'operating': operating_cashflow,
-                'free': free_cashflow,
-                'capex': capital_expenditure
-            },
+            'market_type': market_type,
+            'sector': sector,
+            'industry': industry,
+            'marketCap': market_cap,
+            'currentPrice': current_price,
+            'avgVolume': avg_volume,
+            'per': per,
+            'pbr': pbr,
+            'eps': eps,
+            'bps': bps,
+            'dividendYield': dividend_yield,
             'dates': {
-                'financial': latest_financial_date,
-                'balance': latest_balance_date,
-                'cashflow': latest_cashflow_date
+                'financial': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
+                'balance': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
+                'cashflow': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None
             }
         }
         
@@ -408,8 +605,15 @@ def main():
     # 사이드바 구성
     st.sidebar.header("Settings")
     
+    # 티커 심볼 입력 안내문구 수정
+    st.sidebar.markdown("""
+    ### 종목 코드 입력 가이드
+    - 국내 주식: 종목코드 (예: '005930' for 삼성전자)
+    - 미국 주식: 심볼 (예: 'AAPL' for Apple)
+    """)
+    
     # 티커 심볼 입력
-    symbol = st.sidebar.text_input("Enter Stock Symbol (e.g., AAPL):", "AAPL")
+    symbol = st.sidebar.text_input("Enter Stock Symbol:", "005930")
     
     # 기간 선택
     period = st.sidebar.selectbox(
@@ -418,12 +622,20 @@ def main():
     )
     
     # Fetch Data 버튼
-    if st.sidebar.button("Fetch Data", key="main_fetch_data_button"):
+    if st.sidebar.button("Fetch Data"):
         try:
             data = fetch_stock_data(symbol, period)
             if data is not None:
                 st.session_state['stock_data'] = data
-                st.success(f"{symbol} 데이터를 성공적으로 불러왔습니다.")
+                market_type = data.attrs.get('market_type', 'Unknown')
+                company_name = data.attrs.get('company_name', symbol)
+                
+                # 시장 정보와 회사명 표시
+                st.success(f"""
+                데이터를 성공적으로 불러왔습니다.
+                - 시장: {market_type}
+                - 종목명: {company_name} ({symbol})
+                """)
             else:
                 st.error("데이터를 가져오는데 실패했습니다.")
                 return
@@ -434,6 +646,11 @@ def main():
     # Check if data is available
     if "stock_data" in st.session_state and st.session_state["stock_data"] is not None:
         data = st.session_state["stock_data"]
+        market_type = data.attrs.get('market_type', 'Unknown')
+        company_name = data.attrs.get('company_name', symbol)
+
+        # 차트 제목에 시장 정보와 회사명 추가
+        st.subheader(f"{market_type} - {company_name} ({symbol}) 차트 분석")
 
         # Plot candlestick chart
         try:
@@ -444,7 +661,7 @@ def main():
                     high=data['High'],
                     low=data['Low'],
                     close=data['Close'],
-                    name="Candlestick"
+                    name=f"{company_name} ({symbol})"
                 )
             ])
 
@@ -744,7 +961,7 @@ def main():
                     
                     # 5. 재무 분석
                     try:
-                        ticker = yf.Ticker(symbol)
+                        ticker = fdr.DataReader(symbol, '2023-04-01', '2023-04-30')
                         
                         # 재무제표 데이터 가져오기
                         try:
@@ -932,209 +1149,110 @@ def main():
                     """)
 
                 # 재무 지표 정보 표시
-                st.subheader("🏢 기업 정보 및 재무 지표")
+                st.subheader("🏢 기업 정보")
                 
                 # 기업 기본 정보
-                metrics = get_financial_metrics(yf.Ticker(symbol))
+                metrics = get_financial_metrics(symbol)
                 if metrics:
                     col1, col2 = st.columns(2)
                     
                     with col1:
                         st.markdown("#### 📊 기업 기본 정보")
                         st.markdown(f"""
+                        - 🏛️ 시장: {metrics['market_type']}
                         - 🏭 업종: {metrics['sector']}
                         - 🔍 세부업종: {metrics['industry']}
                         - 💰 시가총액: {format_number(metrics['marketCap'])}
+                        - 📈 현재가: {format_number(metrics['currentPrice'])}
+                        - 📊 평균거래량: {format_number(metrics['avgVolume'])}
                         """)
                     
                     with col2:
-                        st.markdown("#### 📅 재무제표 기준일")
+                        st.markdown("#### 📅 데이터 기준일")
                         st.markdown(f"""
-                        - 📊 재무상태표: {metrics['dates']['balance']}
-                        - 💵 손익계산서: {metrics['dates']['financial']}
+                        - 📊 기준일: {metrics['dates']['financial']}
                         """)
                 
-                # 재무 비율 표시
-                st.markdown("#### 📈 주요 재무 비율")
-                col1, col2, col3, col4 = st.columns(4)
-                col5, col6, col7 = st.columns(3)  # 새로운 행 추가
-                
-                with col1:
-                    if metrics['priceToSalesTrailing12Months'] is not None:
-                        psr = metrics['priceToSalesTrailing12Months']
-                        st.metric("💹 PSR", f"{psr:.2f}")
-                        if psr < 1:
-                            st.success("매우 저평가")
-                        elif psr < 3:
-                            st.info("적정 수준")
-                        else:
-                            st.warning("고평가")
-                
-                with col2:
-                    if metrics['dividendYield'] is not None:
-                        div_yield = metrics['dividendYield'] * 100
-                        st.metric("💰 배당수익률", f"{div_yield:.2f}%")
-                        if div_yield > 5:
-                            st.success("높은 배당")
-                        elif div_yield > 2:
-                            st.info("적정 배당")
-                        else:
-                            st.warning("낮은 배당")
-                
-                with col3:
-                    if metrics['debtRatio'] is not None:
-                        debt_ratio = metrics['debtRatio']
-                        st.metric("🏦 부채비율", f"{debt_ratio:.2f}%")
-                        if debt_ratio < 100:
-                            st.success("안정적")
-                        elif debt_ratio < 200:
-                            st.info("보통")
-                        else:
-                            st.warning("위험")
-                
-                with col4:
-                    if metrics['currentRatio'] is not None:
-                        current_ratio = metrics['currentRatio']
-                        st.metric("💵 유동비율", f"{current_ratio:.2f}%")
-                        if current_ratio > 200:
-                            st.success("매우 안정적")
-                        elif current_ratio > 100:
-                            st.info("안정적")
-                        else:
-                            st.warning("주의 필요")
+                    # 주요 지표 표시
+                    st.markdown("#### 📈 주요 투자 지표")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        if metrics['per'] is not None:
+                            st.metric("📊 PER", f"{metrics['per']:.2f}")
+                            if metrics['per'] < 10:
+                                st.success("저평가")
+                            elif metrics['per'] < 20:
+                                st.info("적정")
+                            else:
+                                st.warning("고평가")
+                    
+                    with col2:
+                        if metrics['pbr'] is not None:
+                            st.metric("📚 PBR", f"{metrics['pbr']:.2f}")
+                            if metrics['pbr'] < 1:
+                                st.success("저평가")
+                            elif metrics['pbr'] < 3:
+                                st.info("적정")
+                            else:
+                                st.warning("고평가")
+                    
+                    with col3:
+                        if metrics['dividendYield'] is not None:
+                            div_yield = metrics['dividendYield']
+                            st.metric("💰 배당수익률", f"{div_yield:.2f}%")
+                            if div_yield > 5:
+                                st.success("높은 배당")
+                            elif div_yield > 2:
+                                st.info("적정 배당")
+                            else:
+                                st.warning("낮은 배당")
 
-                # 새로운 재무 비율 추가
-                with col5:
-                    if probabilities['details']['per'] is not None:
-                        per = probabilities['details']['per']
-                        st.metric("📊 PER", f"{per:.2f}")
-                        if per < 10:
-                            st.success("저평가")
-                        elif per < 20:
-                            st.info("적정 수준")
-                        else:
-                            st.warning("고평가")
+                    # 추가 지표 표시
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if metrics['eps'] is not None:
+                            st.metric("💵 EPS", format_number(metrics['eps']))
+                    
+                    with col2:
+                        if metrics['bps'] is not None:
+                            st.metric("📖 BPS", format_number(metrics['bps']))
 
-                with col6:
-                    if probabilities['details']['pbr'] is not None:
-                        pbr = probabilities['details']['pbr']
-                        st.metric("📚 PBR", f"{pbr:.2f}")
-                        if pbr < 1:
-                            st.success("청산가치 이하")
-                        elif pbr < 3:
-                            st.info("적정 수준")
-                        else:
-                            st.warning("고평가")
-
-                with col7:
-                    if probabilities['details']['roe'] is not None:
-                        roe = probabilities['details']['roe']
-                        st.metric("💫 ROE", f"{roe:.2f}%")
-                        if roe > 15:
-                            st.success("수익성 우수")
-                        elif roe > 10:
-                            st.info("적정 수준")
-                        else:
-                            st.warning("수익성 저조")
-
-                # 주요 재무비율 설명 추가
-                with st.expander("💡 주요 재무비율 설명"):
-                    st.markdown("""
-                    ### 주요 재무비율 해석 가이드
-                    
-                    #### 1️⃣ 수익성 지표
-                    - **ROE (자기자본이익률)**
-                        - 15% 이상: 우수한 수익성
-                        - 10~15%: 양호한 수익성
-                        - 10% 미만: 개선 필요
-                    
-                    #### 2️⃣ 밸류에이션 지표
-                    - **PSR (주가매출비율)**
-                        - 1 미만: 매우 저평가
-                        - 1~3: 적정 수준
-                        - 3 초과: 고평가 가능성
-                    
-                    - **PER (주가수익비율)**
-                        - 10 미만: 저평가 가능성
-                        - 10~20: 적정 수준
-                        - 20 초과: 고평가 가능성
-                    
-                    - **PBR (주가순자산비율)**
-                        - 1 미만: 청산가치 이하
-                        - 1~3: 적정 수준
-                        - 3 초과: 고평가 가능성
-                    
-                    #### 3️⃣ 안정성 지표
-                    - **부채비율**
-                        - 100% 미만: 매우 안정적
-                        - 100~200%: 보통
-                        - 200% 초과: 재무건전성 주의
-                    
-                    - **유동비율**
-                        - 200% 초과: 매우 안정적
-                        - 100~200%: 양호
-                        - 100% 미만: 단기지급능력 주의
-                    
-                    #### 4️⃣ 수익 환원 지표
-                    - **배당수익률**
-                        - 5% 초과: 고배당
+                    # 투자 유의사항
+                    with st.expander("💡 투자 지표 설명"):
+                        st.markdown("""
+                        ### 주요 투자 지표 해석 가이드
+                        
+                        #### 1️⃣ PER (주가수익비율)
+                        - 10배 미만: 저평가 가능성
+                        - 10~20배: 적정 수준
+                        - 20배 초과: 고평가 가능성
+                        
+                        #### 2️⃣ PBR (주가순자산비율)
+                        - 1배 미만: 청산가치 이하
+                        - 1~3배: 적정 수준
+                        - 3배 초과: 고평가 가능성
+                        
+                        #### 3️⃣ 배당수익률
+                        - 5% 초과: 고배당 주식
                         - 2~5%: 적정 배당
                         - 2% 미만: 저배당
-                    
-                    ### 💡 투자 시 고려사항
-                    1. 단일 지표가 아닌 여러 지표를 종합적으로 분석
-                    2. 동일 업종 내 다른 기업들과 비교 분석 필요
-                    3. 과거 추세와 현재 지표 변화 방향성 고려
-                    4. 기업의 성장단계와 산업 특성 반영
-                    """)
-
-                # 현금흐름 정보 표시 (재무 비율 표시 다음에 추가)
-                if metrics and metrics.get('cashflow'):
-                    st.markdown("#### 💰 현금흐름 분석")
-                    cf_col1, cf_col2, cf_col3 = st.columns(3)
-                    
-                    with cf_col1:
-                        if metrics['cashflow']['operating'] is not None:
-                            operating_cf = metrics['cashflow']['operating']
-                            st.metric("영업현금흐름", format_number(operating_cf))
-                            if operating_cf > 0:
-                                st.success("양호한 영업활동")
-                            else:
-                                st.error("영업활동 주의")
-                    
-                    with cf_col2:
-                        if metrics['cashflow']['free'] is not None:
-                            free_cf = metrics['cashflow']['free']
-                            st.metric("잉여현금흐름", format_number(free_cf))
-                            if free_cf > 0:
-                                st.success("투자여력 있음")
-                            else:
-                                st.warning("투자여력 부족")
-                    
-                    with cf_col3:
-                        if metrics['cashflow']['capex'] is not None:
-                            capex = abs(metrics['cashflow']['capex'])  # CAPEX는 보통 음수로 표시되므로 절대값 처리
-                            st.metric("설비투자", format_number(capex))
-                            
-                    # 현금흐름 설명 추가
-                    with st.expander("💡 현금흐름 지표 설명"):
-                        st.markdown("""
-                        ### 현금흐름 지표 해석 가이드
                         
-                        #### 1️⃣ 영업현금흐름
-                        - 기업의 주된 영업활동에서 발생한 현금흐름
-                        - 양(+)의 값: 건전한 영업활동
-                        - 음(-)의 값: 영업활동에서 현금 유출 발생
+                        #### 4️⃣ EPS (주당순이익)
+                        - 기업이 1주당 창출하는 순이익
+                        - 높을수록 수익성이 좋음
                         
-                        #### 2️⃣ 잉여현금흐름
-                        - 영업현금흐름에서 필수 투자비용을 제외한 금액
-                        - 양(+)의 값: 추가 투자/배당 여력 존재
-                        - 음(-)의 값: 외부 자금조달 필요 가능성
+                        #### 5️⃣ BPS (주당순자산가치)
+                        - 기업이 1주당 보유한 순자산
+                        - PBR 계산의 기준이 됨
                         
-                        #### 3️⃣ 설비투자(CAPEX)
-                        - 기업의 생산설비, 부동산 등 고정자산 투자금액
-                        - 높은 투자: 미래 성장을 위한 투자 진행
-                        - 낮은 투자: 보수적 재무운영 또는 성장 둔화
+                        ### 💡 투자 시 고려사항
+                        1. 단일 지표가 아닌 여러 지표를 종합적으로 분석
+                        2. 동일 업종 내 다른 기업들과 비교 분석 필요
+                        3. 과거 추세와 현재 지표 변화 방향성 고려
+                        4. 기업의 성장단계와 산업 특성 반영
+                        5. 시장별 특성과 기업 규모 고려
                         """)
 
             # Footer

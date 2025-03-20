@@ -1,5 +1,5 @@
 import streamlit as st
-import yfinance as yf
+import FinanceDataReader as fdr
 import pandas as pd
 import numpy as np
 import time
@@ -200,16 +200,123 @@ test_size = st.sidebar.slider(
 
 @st.cache_data(ttl=3600)
 def get_stock_data(ticker, start, end):
+    """주식 데이터를 가져오는 함수"""
     try:
-        data = yf.download(ticker, start=start, end=end)
-        if data.empty:
-            st.error(f"'{ticker}' 심볼에 대한 데이터를 찾을 수 없습니다.")
+        # 종목 코드에서 공백 제거
+        ticker = ticker.strip()
+        
+        if not ticker:
+            st.error("종목 코드를 입력해주세요.")
             return None
-        data.reset_index(inplace=True)
-        return data
+        
+        # 미국 주요 주식 목록
+        US_STOCKS = {
+            'AAPL': 'Apple Inc.',
+            'MSFT': 'Microsoft Corporation',
+            'GOOGL': 'Alphabet Inc.',
+            'AMZN': 'Amazon.com Inc.',
+            'META': 'Meta Platforms Inc.',
+            'TSLA': 'Tesla Inc.',
+            'NVDA': 'NVIDIA Corporation'
+        }
+        
+        # 미국 주식인지 확인
+        is_us_stock = ticker.upper() in US_STOCKS or '.' in ticker
+        
+        if is_us_stock:
+            try:
+                # 미국 주식 데이터 가져오기
+                df = fdr.DataReader(ticker, start, end)
+                if df is None or df.empty:
+                    st.error(f"{ticker}에 대한 주가 데이터가 없습니다.")
+                    if ticker.upper() in US_STOCKS:
+                        st.info(f"'{US_STOCKS[ticker.upper()]}' ({ticker.upper()})의 데이터를 찾을 수 없습니다.")
+                    else:
+                        st.info("미국 주식 심볼을 확인하고 다시 시도해주세요.")
+                    return None
+                
+                stock_name = US_STOCKS.get(ticker.upper(), ticker.upper())
+                st.success(f"미국 주식 '{stock_name}' ({ticker.upper()}) 데이터를 성공적으로 불러왔습니다.")
+                
+            except Exception as us_error:
+                st.error(f"미국 주식 데이터를 가져오는데 실패했습니다: {str(us_error)}")
+                st.info("주식 심볼을 확인하고 다시 시도해주세요.")
+                return None
+        else:
+            try:
+                # KRX 데이터 가져오기 (최대 3번 재시도)
+                max_retries = 3
+                retry_count = 0
+                stock_info = None
+                
+                while retry_count < max_retries:
+                    try:
+                        stock_info = fdr.StockListing('KRX')
+                        break
+                    except Exception as retry_error:
+                        retry_count += 1
+                        if retry_count == max_retries:
+                            st.error("KRX 데이터를 가져오는데 실패했습니다.")
+                            st.info(f"오류 내용: {str(retry_error)}")
+                            return None
+                        time.sleep(1)
+                
+                if stock_info is None or stock_info.empty:
+                    st.error("KRX 종목 정보가 비어있습니다.")
+                    st.info("잠시 후 다시 시도해주세요.")
+                    return None
+                
+                if 'Symbol' not in stock_info.columns or 'Name' not in stock_info.columns:
+                    available_columns = ', '.join(stock_info.columns)
+                    st.error("KRX 데이터에서 필수 정보(Symbol/Name)를 찾을 수 없습니다.")
+                    st.info(f"사용 가능한 컬럼: {available_columns}")
+                    return None
+                
+                # 종목 코드로 검색
+                matching_stocks = stock_info[stock_info['Symbol'] == ticker]
+                if matching_stocks.empty:
+                    # 종목명으로 검색 시도
+                    name_match = stock_info[stock_info['Name'].str.contains(ticker, case=False, na=False)]
+                    if not name_match.empty:
+                        st.warning(f"입력하신 '{ticker}'는 종목명입니다. 다음 종목들을 찾았습니다:")
+                        for _, row in name_match.iterrows():
+                            st.write(f"- {row['Name']}: {row['Symbol']}")
+                        return None
+                    else:
+                        st.error(f"'{ticker}'에 해당하는 한국 주식을 찾을 수 없습니다.")
+                        st.info("올바른 종목 코드를 입력해주세요. (예: 삼성전자 - 005930)")
+                        return None
+                
+                stock_name = matching_stocks['Name'].iloc[0]
+                
+                # 주가 데이터 가져오기
+                df = fdr.DataReader(ticker, start, end)
+                if df is None or df.empty:
+                    st.error(f"{stock_name} ({ticker})에 대한 주가 데이터가 없습니다.")
+                    st.info("종목 코드와 날짜를 확인하고 다시 시도해주세요.")
+                    return None
+                
+                st.success(f"한국 주식 '{stock_name}' ({ticker}) 데이터를 성공적으로 불러왔습니다.")
+                
+            except Exception as kr_error:
+                st.error(f"한국 주식 데이터를 가져오는데 실패했습니다: {str(kr_error)}")
+                st.info("종목 코드를 확인하고 다시 시도해주세요.")
+                return None
+        
+        # 필요한 컬럼 존재 여부 확인
+        required_columns = ['Open', 'High', 'Low', 'Close', 'Volume']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            st.error(f"필수 데이터가 누락되었습니다: {', '.join(missing_columns)}")
+            return None
+        
+        # 필요한 컬럼만 선택하고 결측치 처리
+        df = df[required_columns].fillna(method='ffill').fillna(method='bfill')
+        return df
+        
     except Exception as e:
-        st.error(f"데이터 다운로드 중 오류 발생: {str(e)}")
-        st.info("인터넷 연결 상태와 심볼을 확인해주세요.")
+        st.error(f"예상치 못한 오류가 발생했습니다: {str(e)}")
+        st.info("잠시 후 다시 시도해주세요.")
         return None
 
 def validate_parameters(model_type, **params):
@@ -1416,82 +1523,60 @@ class ProbabilisticAnalyzer:
             return None
 
     def plot_model_comparison(self):
+        """모델별 성능 비교 시각화"""
         try:
-            # 모델별 현재 신호와 정확도를 저장할 데이터프레임 생성
+            if not self.performance_metrics:
+                return None, pd.DataFrame()
+
+            # 성능 지표 데이터프레임 생성
             comparison_data = []
+            for name, metrics in self.performance_metrics.items():
+                row_data = {
+                    'Model': name,
+                    'Current Signal': self.predictions[name].iloc[-1] if name in self.predictions else 'HOLD',
+                    'Accuracy': f"{metrics['승률']:.2f}%",
+                    'Cumulative Return': f"{metrics['누적 수익률']*100:.2f}%",
+                    'Sharpe Ratio': f"{metrics['샤프 비율']:.2f}"
+                }
+                comparison_data.append(row_data)
             
-            for name, model in self.models.items():
-                try:
-                    if name in self.predictions:
-                        predictions = self.predictions[name]
-                        if not isinstance(predictions, pd.Series) or predictions.empty:
-                            continue
-                            
-                        current_signal = predictions.iloc[-1]
-                        
-                        # 모델별 정확도 계산
-                        try:
-                            if name == 'Linear Regression':
-                                y_pred = model.predict(self.X_test_reg)
-                                y_test_reg_values = self.y_test_reg.values.ravel()
-                                accuracy = r2_score(y_test_reg_values, y_pred)
-                            elif name == 'LSTM':
-                                y_pred = (model.predict(self.X_test_seq) > 0.5).astype(int)
-                                accuracy = accuracy_score(self.y_test_seq, y_pred)
-                            else:
-                                y_pred = model.predict(self.X_test_scaled)
-                                accuracy = accuracy_score(self.y_test, y_pred)
-                            
-                            comparison_data.append({
-                                'Model': name,
-                                'Current Signal': current_signal,
-                                'Accuracy': f"{accuracy * 100:.2f}%"
-                            })
-                        except Exception as calc_error:
-                            st.warning(f"{name} 모델의 정확도 계산 중 오류 발생: {str(calc_error)}")
-                            continue
-                            
-                except Exception as model_error:
-                    st.warning(f"{name} 모델 처리 중 오류 발생: {str(model_error)}")
-                    continue
-            
-            # 데이터프레임 생성
             comparison_df = pd.DataFrame(comparison_data)
             
             if comparison_df.empty:
-                st.warning("모델 비교를 위한 데이터가 없습니다.")
-                return None, pd.DataFrame()
+                return None, comparison_df
             
             # 시각화
-            try:
-                fig = go.Figure()
-                
-                # 신호별 색상 설정
-                colors = {'BUY': 'green', 'SELL': 'red', 'HOLD': 'gray'}
-                
-                for signal in ['BUY', 'SELL', 'HOLD']:
-                    signal_data = comparison_df[comparison_df['Current Signal'] == signal]
-                    if not signal_data.empty:
-                        fig.add_trace(go.Bar(
-                            name=signal,
-                            x=signal_data['Model'],
-                            y=[float(acc.strip('%')) for acc in signal_data['Accuracy']],
-                            marker_color=colors[signal]
-                        ))
+            fig = go.Figure()
+            colors = {'BUY': 'green', 'SELL': 'red', 'HOLD': 'gray'}
             
-                fig.update_layout(
-                    title='모델별 신호 및 정확도 비교',
-                    xaxis_title='모델',
-                    yaxis_title='정확도 (%)',
-                    barmode='group',
-                    height=500
+            # 각 신호별 막대 그래프 생성
+            for signal in ['BUY', 'SELL', 'HOLD']:
+                mask = comparison_df['Current Signal'] == signal
+                if mask.any():
+                    fig.add_trace(go.Bar(
+                        name=signal,
+                        x=comparison_df[mask]['Model'],
+                        y=[float(acc.strip('%')) for acc in comparison_df[mask]['Accuracy']],
+                        marker_color=colors[signal]
+                    ))
+            
+            # 레이아웃 설정
+            fig.update_layout(
+                title='모델별 성능 비교',
+                xaxis_title='모델',
+                yaxis_title='승률 (%)',
+                barmode='group',
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="right",
+                    x=0.99
                 )
-                
-                return fig, comparison_df
-                
-            except Exception as viz_error:
-                st.error(f"시각화 생성 중 오류 발생: {str(viz_error)}")
-                return None, comparison_df
+            )
+            
+            return fig, comparison_df
             
         except Exception as e:
             st.error(f"모델 비교 시각화 중 오류 발생: {str(e)}")
@@ -1539,17 +1624,14 @@ class ModelSignalAnalyzer:
                 win_trades = sum(1 for r in strategy_returns if r > 0)
                 
                 metrics_dict = {
-                    '누적 수익률': float(cumulative_returns.iloc[-1] - 1) if len(cumulative_returns) > 0 else 0.0,
-                    '평균 수익률': float(strategy_returns.mean()) if len(strategy_returns) > 0 else 0.0,
                     '승률': float(win_trades / total_trades * 100) if total_trades > 0 else 0.0,
-                    '총 거래 횟수': total_trades,
-                    '샤프 비율': self.calculate_sharpe_ratio(strategy_returns),
-                    '최대 낙폭': self.calculate_max_drawdown(cumulative_returns)
+                    '누적 수익률': float(cumulative_returns.iloc[-1] - 1) if len(cumulative_returns) > 0 else 0.0,
+                    '샤프 비율': self.calculate_sharpe_ratio(strategy_returns)
                 }
                 
                 metrics[name] = metrics_dict
             
-            self.performance_metrics = metrics
+            self.performance_metrics = metrics  # performance_metrics 업데이트
             self.plot_performance_comparison()
             return metrics
             
@@ -1646,6 +1728,66 @@ class ModelSignalAnalyzer:
             
         except Exception as e:
             st.error(f"성능 비교 시각화 중 오류 발생: {str(e)}")
+
+    def plot_model_comparison(self):
+        """모델별 성능 비교 시각화"""
+        try:
+            if not self.performance_metrics:
+                return None, pd.DataFrame()
+
+            # 성능 지표 데이터프레임 생성
+            comparison_data = []
+            for name, metrics in self.performance_metrics.items():
+                row_data = {
+                    'Model': name,
+                    'Current Signal': self.predictions[name].iloc[-1] if name in self.predictions else 'HOLD',
+                    'Accuracy': f"{metrics['승률']:.2f}%",
+                    'Cumulative Return': f"{metrics['누적 수익률']*100:.2f}%",
+                    'Sharpe Ratio': f"{metrics['샤프 비율']:.2f}"
+                }
+                comparison_data.append(row_data)
+            
+            comparison_df = pd.DataFrame(comparison_data)
+            
+            if comparison_df.empty:
+                return None, comparison_df
+            
+            # 시각화
+            fig = go.Figure()
+            colors = {'BUY': 'green', 'SELL': 'red', 'HOLD': 'gray'}
+            
+            # 각 신호별 막대 그래프 생성
+            for signal in ['BUY', 'SELL', 'HOLD']:
+                mask = comparison_df['Current Signal'] == signal
+                if mask.any():
+                    fig.add_trace(go.Bar(
+                        name=signal,
+                        x=comparison_df[mask]['Model'],
+                        y=[float(acc.strip('%')) for acc in comparison_df[mask]['Accuracy']],
+                        marker_color=colors[signal]
+                    ))
+            
+            # 레이아웃 설정
+            fig.update_layout(
+                title='모델별 성능 비교',
+                xaxis_title='모델',
+                yaxis_title='승률 (%)',
+                barmode='group',
+                height=500,
+                showlegend=True,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="right",
+                    x=0.99
+                )
+            )
+            
+            return fig, comparison_df
+            
+        except Exception as e:
+            st.error(f"모델 비교 시각화 중 오류 발생: {str(e)}")
+            return None, pd.DataFrame()
 
 if st.sidebar.button("분석 시작"):
     stock_data = get_stock_data(ticker, start_date, end_date)

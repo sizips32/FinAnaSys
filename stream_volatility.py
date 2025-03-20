@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import yfinance as yf
+import FinanceDataReader as fdr
 import matplotlib.pyplot as plt
 import datetime as dt
 
@@ -31,9 +31,9 @@ def check_dependencies():
     except ImportError:
         missing_packages.append("pandas")
     try:
-        import yfinance
+        import FinanceDataReader
     except ImportError:
-        missing_packages.append("yfinance")
+        missing_packages.append("FinanceDataReader")
     try:
         import arch
     except ImportError:
@@ -171,10 +171,45 @@ with st.expander("8. Calmar Ratio (칼마 비율)", expanded=False):
 ########################################
 
 def fetch_data(ticker, start_date, end_date):
-    """yfinance로 주가 데이터를 다운로드 후 일별 수익률을 계산합니다."""
-    data = yf.download(ticker, start=start_date, end=end_date)
-    data['Returns'] = data['Close'].pct_change().dropna()
-    return data
+    """FinanceDataReader로 주가 데이터를 다운로드 후 일별 수익률을 계산합니다."""
+    try:
+        # 데이터 다운로드
+        data = fdr.DataReader(ticker, start_date, end_date)
+        
+        # 데이터 유효성 검사
+        if data.empty:
+            st.error(f"'{ticker}' 종목의 데이터를 찾을 수 없습니다.")
+            return pd.DataFrame()
+            
+        if 'Close' not in data.columns:
+            st.error("종가(Close) 데이터가 없습니다.")
+            return pd.DataFrame()
+            
+        # NaN 값 처리
+        data = data.fillna(method='ffill').fillna(method='bfill')
+        
+        # 최소 2개 이상의 데이터 포인트가 필요
+        if len(data) < 2:
+            st.error("분석을 위한 충분한 데이터가 없습니다. (최소 2일 이상 필요)")
+            return pd.DataFrame()
+        
+        # 수익률 계산
+        try:
+            returns = data['Close'].pct_change()
+            data['Returns'] = returns
+            
+            # 첫 번째 행의 NaN 제거
+            data = data.iloc[1:]
+            
+            return data
+            
+        except Exception as e:
+            st.error(f"수익률 계산 중 오류 발생: {str(e)}")
+            return pd.DataFrame()
+            
+    except Exception as e:
+        st.error(f"데이터 다운로드 중 오류 발생: {str(e)}")
+        return pd.DataFrame()
 
 def calculate_volatility(data):
     """GARCH(1,1) 기반 일별 변동성 추정."""
@@ -189,17 +224,37 @@ def bayesian_analysis(data, prior_mean=0.10, prior_variance=0.05):
     베이지안 사후 평균 및 분산 추정.
     연역적 추론(If-Then) + 확률적 예측(베이지안) 의사결정 근거.
     """
-    likelihood_variance = np.var(data['Returns'].dropna())
-    posterior_mean = (
-        (prior_mean / prior_variance) +
-        (np.mean(data['Returns']) / likelihood_variance)
-    ) / (
-        (1 / prior_variance) + (1 / likelihood_variance)
-    )
-    posterior_variance = 1 / (
-        (1 / prior_variance) + (1 / likelihood_variance)
-    )
-    return posterior_mean, posterior_variance
+    try:
+        # NaN 값 제거 및 데이터 유효성 검사
+        returns = data['Returns'].dropna()
+        if len(returns) == 0:
+            st.warning("수익률 데이터가 비어있습니다.")
+            return prior_mean, prior_variance
+
+        likelihood_variance = np.var(returns)
+        if likelihood_variance == 0:
+            st.warning("수익률의 분산이 0입니다. 기본값을 사용합니다.")
+            return prior_mean, prior_variance
+
+        posterior_mean = (
+            (prior_mean / prior_variance) +
+            (np.mean(returns) / likelihood_variance)
+        ) / (
+            (1 / prior_variance) + (1 / likelihood_variance)
+        )
+        posterior_variance = 1 / (
+            (1 / prior_variance) + (1 / likelihood_variance)
+        )
+
+        # 결과 유효성 검사
+        if not np.isfinite(posterior_mean) or not np.isfinite(posterior_variance):
+            st.warning("계산된 값이 유효하지 않습니다. 기본값을 사용합니다.")
+            return prior_mean, prior_variance
+
+        return posterior_mean, posterior_variance
+    except Exception as e:
+        st.error(f"베이지안 분석 중 오류 발생: {str(e)}")
+        return prior_mean, prior_variance
 
 def generate_investment_signal(posterior_mean, risk_free=0.05):
     """
@@ -392,8 +447,27 @@ def simulate_hedging(data, hedge_ratio, initial_cash=100000):
 # 7. 사이드바 (사용자 입력)
 ########################################
 st.sidebar.header('설정 옵션')
-ticker = st.sidebar.text_input('주식 티커 입력', value='SPY')
-benchmark_ticker = st.sidebar.text_input('벤치마크 티커', value='^GSPC')
+
+# 마켓 선택
+market = st.sidebar.selectbox(
+    '마켓 선택',
+    ['KRX', 'NASDAQ', 'NYSE', 'AMEX']
+)
+
+# 티커 입력 안내
+if market == 'KRX':
+    ticker_guide = "종목코드 입력 (예: 005930)"
+    default_ticker = "005930"  # 삼성전자
+    benchmark_guide = "벤치마크 종목코드 (예: KS11)"  # KOSPI
+    default_benchmark = "KS11"
+else:
+    ticker_guide = "티커 입력 (예: AAPL)"
+    default_ticker = "AAPL"  # Apple
+    benchmark_guide = "벤치마크 티커 (예: SPY)"  # S&P 500 ETF
+    default_benchmark = "SPY"
+
+ticker = st.sidebar.text_input('종목 코드', value=default_ticker, help=ticker_guide)
+benchmark_ticker = st.sidebar.text_input('벤치마크', value=default_benchmark, help=benchmark_guide)
 
 start_date = st.sidebar.date_input('시작 날짜', dt.date(2015, 1, 1))
 end_date = st.sidebar.date_input('종료 날짜', dt.date.today())
@@ -421,191 +495,194 @@ initial_cash = 100000
 ########################################
 if execute:
     # (1) 분석 대상 데이터 불러오기
-    data = fetch_data(ticker, start_date, end_date)
-    # (2) 벤치마크 데이터
-    benchmark_data = fetch_data(benchmark_ticker, start_date, end_date)
-
-    if data.empty or data['Returns'].isnull().all():
-        st.error("분석 대상 수익률 데이터가 없습니다. 다른 티커를 확인해주세요.")
+    if market == 'KRX' and not ticker.isdigit():
+        st.error("KRX 시장의 경우 숫자로 된 종목코드를 입력해주세요.")
     else:
-        # (3) 변동성 계산 (GARCH)
-        data = calculate_volatility(data)
+        data = fetch_data(ticker, start_date, end_date)
+        # (2) 벤치마크 데이터
+        benchmark_data = fetch_data(benchmark_ticker, start_date, end_date)
 
-        # (4) 베이지안 분석 (연역적+확률적 추론)
-        st.header('🔮 베이지안 변동성 분석')
-        posterior_mean, posterior_variance = bayesian_analysis(data, prior_mean, prior_variance)
-        st.write(f"**사후 평균 (Posterior Mean)**: {posterior_mean:.4f}")
-        st.write(f"**사후 분산 (Posterior Variance)**: {posterior_variance:.4f}")
-
-        # (5) 매수/관망 신호 (generate_investment_signal)
-        investment_signal = generate_investment_signal(posterior_mean, risk_free_rate)
-        st.write(investment_signal)
-
-        # (6) 투자설명 (연역적 로직 + 사후평균 vs 무위험이자율)
-        if posterior_mean > risk_free_rate:
-            st.markdown("""
-            - **사후 평균**이 무위험 수익률보다 **높음**  
-            - 이는 **긍정적 기대수익**을 시사 → **매수/유지** 전략 고려
-            """)
+        if data.empty or data['Returns'].isnull().all():
+            st.error("분석 대상 수익률 데이터가 없습니다. 다른 티커를 확인해주세요.")
         else:
-            st.markdown("""
-            - **사후 평균**이 무위험 수익률 **이하**  
-            - 기대수익이 높지 않음 → **관망/매도** 또는 대체자산 고려
-            """)
+            # (3) 변동성 계산 (GARCH)
+            data = calculate_volatility(data)
 
-        # (7) VaR
-        var_value = calculate_var(data)
-        st.write(f"**VaR (95% 신뢰수준)**: {var_value:.4f}")
+            # (4) 베이지안 분석 (연역적+확률적 추론)
+            st.header('🔮 베이지안 변동성 분석')
+            posterior_mean, posterior_variance = bayesian_analysis(data, prior_mean, prior_variance)
+            st.write(f"**사후 평균 (Posterior Mean)**: {posterior_mean:.4f}")
+            st.write(f"**사후 분산 (Posterior Variance)**: {posterior_variance:.4f}")
 
-        # (8) 변동성 시각화
-        st.subheader('📈 변동성 시각화')
-        fig, ax = plt.subplots()
-        ax.plot(data.index, data['Volatility'], label='Volatility')
-        ax.axhline(volatility_threshold/100, color='r', linestyle='--', label='Threshold')
-        ax.legend()
-        st.pyplot(fig)
+            # (5) 매수/관망 신호 (generate_investment_signal)
+            investment_signal = generate_investment_signal(posterior_mean, risk_free_rate)
+            st.write(investment_signal)
 
-        # (9) 동적 헤지 시뮬레이션
-        st.header('🛡️ 동적 헤지 전략 시뮬레이션')
-        data = simulate_hedging(data, hedge_ratio, initial_cash)
-
-        # (10) 포트폴리오 가치 변화
-        st.subheader('💰 포트폴리오 가치 변화')
-        fig2, ax2 = plt.subplots()
-        ax2.plot(data.index, data['Portfolio'], label='포트폴리오 가치', color='blue')
-        ax2.set_title('포트폴리오 가치 변화')
-        ax2.set_xlabel('날짜')
-        ax2.set_ylabel('포트폴리오 가치 ($)')
-        ax2.legend()
-        st.pyplot(fig2)
-
-        # (11) 누적 수익률
-        data['Cumulative Returns'] = (data['Returns'] + 1).cumprod() - 1
-        st.subheader('📊 누적 수익률')
-        fig3, ax3 = plt.subplots()
-        ax3.plot(data.index, data['Cumulative Returns'], label='누적 수익률', color='green')
-        ax3.set_title('누적 수익률')
-        ax3.set_xlabel('날짜')
-        ax3.set_ylabel('누적 수익률 (%)')
-        ax3.legend()
-        st.pyplot(fig3)
-
-        # (12) 성과 요약
-        st.subheader('📌 성과 요약')
-        final_value = data['Portfolio'].iloc[-1]
-        total_return = ((final_value / initial_cash) - 1) * 100
-        st.write(f"- 최종 포트폴리오 가치: ${final_value:,.2f}")
-        st.write(f"- 총 수익률: {total_return:.2f}%")
-
-        # (13) MDD
-        st.header('🏳️ MDD (Maximum Drawdown)')
-        mdd_value = calculate_mdd(data['Returns'])
-        # 구간별 해석
-        mdd_text = interpret_mdd(mdd_value)
-        st.write(mdd_text)
-
-        # (14) Sharpe & Sortino
-        st.header('📈 Sharpe Ratio & Sortino Ratio')
-        sharpe_val = calculate_sharpe_ratio(data['Returns'], risk_free_rate)
-        sortino_val = calculate_sortino_ratio(data['Returns'], risk_free_rate)
-        st.write(f"- Sharpe Ratio: {sharpe_val:.4f}")
-        st.write(f"- Sortino Ratio: {sortino_val:.4f}")
-
-        # (15) Information Ratio & Treynor Ratio
-        st.header('📊 Information Ratio & Treynor Ratio')
-        if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
-            info_ratio_val = calculate_information_ratio(data['Returns'], benchmark_data['Returns'])
-            treynor_val = calculate_treynor_ratio(data['Returns'], benchmark_data['Returns'], risk_free_rate)
-            st.write(f"- Information Ratio: {info_ratio_val:.4f}")
-            st.write(f"- Treynor Ratio: {treynor_val:.4f}")
-
-            st.markdown("""
-            - **Information Ratio**: 벤치마크 대비 초과수익을 얼마나 '안정적'으로 내는지  
-            - **Treynor Ratio**: Beta(시스템적 위험) 1만큼 감수할 때 초과수익이 얼마나 되는지
-            """)
-        else:
-            st.warning("벤치마크 데이터가 부족하여 IR/Treynor 계산 불가.")
-
-        # (16) Alpha & Beta
-        st.header('📐 Alpha & Beta (빈도 선택)')
-        if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
-            alpha_val, beta_val = calculate_alpha_beta(
-                data['Returns'],
-                benchmark_data['Returns'],
-                risk_free_rate,
-                freq=freq_option
-            )
-            st.write(f"- Alpha({freq_option}, 연율): {alpha_val:.4f}")
-            st.write(f"- Beta({freq_option}): {beta_val:.4f}")
-            st.markdown("""
-            - Beta > 1 : 시장보다 변동성 큼(공격)  
-            - Beta < 1 : 시장보다 변동성 낮음(방어)  
-            - Alpha > 0: 시장 대비 초과수익  
-            - Alpha < 0: 시장 대비 부진
-            """)
-        else:
-            st.warning("벤치마크 데이터가 없어 Alpha·Beta 계산 불가.")
-
-        # (17) Calmar Ratio
-        st.header("🌊 Calmar Ratio")
-        calmar_val = calculate_calmar_ratio(data['Returns'])
-        calmar_text = interpret_calmar_ratio(calmar_val)
-        st.write(calmar_text)
-
-        # (18) 에르고딕 가설
-        st.header('🔎 에르고딕 가설 분석')
-        st.markdown("""
-        **에르고딕 가설**:  
-        - 시간 평균 ≈ 표본 평균이면 과거 통계가 미래에도 유효할 가능성 높음
-        """)
-        cum_ret = data['Cumulative Returns']
-        st.line_chart(cum_ret)
-
-        time_avg = cum_ret.mean()  # 시계열의 단순 평균
-        ensemble_avg = data['Returns'].mean() * len(data)  # 집합 평균 (단순히 mean x sample_count)
-        diff = abs(time_avg - ensemble_avg)
-
-        st.write(f"- 시간 평균 (Time Average): {time_avg:.4f}")
-        st.write(f"- 집합 평균 (Ensemble Average): {ensemble_avg:.4f}")
-        st.write(f"- 차이값: {diff:.4f}")
-
-        if diff < 0.01:
-            st.write("✅ 에르고딕 성질이 **강하게** 성립")
-        elif diff < 0.05:
-            st.write("🟨 에르고딕 성질이 **약하게** 성립")
-        else:
-            st.write("❌ 에르고딕 성질이 **성립하지 않음**")
-
-        # (19) 종합 결과
-        st.header('🔔 종합 결과 분석')
-        st.write(f"**최종 포트폴리오 가치**: ${final_value:,.2f}")
-        st.write(f"**총 수익률**: {total_return:.2f}%")
-        st.write(f"**MDD**: {mdd_value*100:.2f}%")
-        st.write(f"**Sharpe Ratio**: {sharpe_val:.4f}")
-        st.write(f"**Sortino Ratio**: {sortino_val:.4f}")
-        if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
-            st.write(f"**Information Ratio**: {info_ratio_val:.4f}")
-            st.write(f"**Treynor Ratio**: {treynor_val:.4f}")
-            st.write(f"**Alpha({freq_option})**: {alpha_val:.4f}")
-            st.write(f"**Beta({freq_option})**: {beta_val:.4f}")
-        st.write(f"**Calmar Ratio**: {calmar_val:.4f}")
-
-        # (20) 🌟 투자 추천 (연역적 로직 + 확률적 예측)
-        st.subheader('🌟 투자 의사결정 추천')
-        # 간단한 예시 로직: posterior_mean vs risk_free, MDD, Sharpe
-        # (실무에서는 훨씬 정교한 조건을 넣어야 함)
-        if posterior_mean > risk_free_rate:
-            if abs(mdd_value) < 0.2 and sharpe_val > 1.0:
-                st.write("✅ **매수** 추천: 사후 평균이 높고, MDD와 Sharpe Ratio가 괜찮은 편입니다.")
-                st.write(" - 무위험 수익률을 상회하는 기대수익 + 안정적인 변동성 감안.")
+            # (6) 투자설명 (연역적 로직 + 사후평균 vs 무위험이자율)
+            if posterior_mean > risk_free_rate:
+                st.markdown("""
+                - **사후 평균**이 무위험 수익률보다 **높음**  
+                - 이는 **긍정적 기대수익**을 시사 → **매수/유지** 전략 고려
+                """)
             else:
-                st.write("🔄 **유지/추가매수 신중 검토**: 수익률 기대는 높지만, 변동성/리스크도 함께 체크 필요.")
-        else:
-            if sharpe_val < 0.5 or abs(mdd_value) > 0.2:
-                st.write("❌ **매도** 권장: 기대수익 낮고 변동성(낙폭) 위험도 큼.")
-            else:
-                st.write("🔍 **관망**: 기대수익 낮으나, Sharpe Ratio 등이 보통 수준. 시장상황을 좀 더 지켜보세요.")
+                st.markdown("""
+                - **사후 평균**이 무위험 수익률 **이하**  
+                - 기대수익이 높지 않음 → **관망/매도** 또는 대체자산 고려
+                """)
 
-        # (21) 종합 결과
-        st.markdown("---")
-        st.success("💡 분석 완료! 위 지표와 해석을 종합해 최종 투자 결정을 내리시길 바랍니다.")
+            # (7) VaR
+            var_value = calculate_var(data)
+            st.write(f"**VaR (95% 신뢰수준)**: {var_value:.4f}")
+
+            # (8) 변동성 시각화
+            st.subheader('📈 변동성 시각화')
+            fig, ax = plt.subplots()
+            ax.plot(data.index, data['Volatility'], label='Volatility')
+            ax.axhline(volatility_threshold/100, color='r', linestyle='--', label='Threshold')
+            ax.legend()
+            st.pyplot(fig)
+
+            # (9) 동적 헤지 시뮬레이션
+            st.header('🛡️ 동적 헤지 전략 시뮬레이션')
+            data = simulate_hedging(data, hedge_ratio, initial_cash)
+
+            # (10) 포트폴리오 가치 변화
+            st.subheader('💰 포트폴리오 가치 변화')
+            fig2, ax2 = plt.subplots()
+            ax2.plot(data.index, data['Portfolio'], label='포트폴리오 가치', color='blue')
+            ax2.set_title('포트폴리오 가치 변화')
+            ax2.set_xlabel('날짜')
+            ax2.set_ylabel('포트폴리오 가치 ($)')
+            ax2.legend()
+            st.pyplot(fig2)
+
+            # (11) 누적 수익률
+            data['Cumulative Returns'] = (data['Returns'] + 1).cumprod() - 1
+            st.subheader('📊 누적 수익률')
+            fig3, ax3 = plt.subplots()
+            ax3.plot(data.index, data['Cumulative Returns'], label='누적 수익률', color='green')
+            ax3.set_title('누적 수익률')
+            ax3.set_xlabel('날짜')
+            ax3.set_ylabel('누적 수익률 (%)')
+            ax3.legend()
+            st.pyplot(fig3)
+
+            # (12) 성과 요약
+            st.subheader('📌 성과 요약')
+            final_value = data['Portfolio'].iloc[-1]
+            total_return = ((final_value / initial_cash) - 1) * 100
+            st.write(f"- 최종 포트폴리오 가치: ${final_value:,.2f}")
+            st.write(f"- 총 수익률: {total_return:.2f}%")
+
+            # (13) MDD
+            st.header('🏳️ MDD (Maximum Drawdown)')
+            mdd_value = calculate_mdd(data['Returns'])
+            # 구간별 해석
+            mdd_text = interpret_mdd(mdd_value)
+            st.write(mdd_text)
+
+            # (14) Sharpe & Sortino
+            st.header('📈 Sharpe Ratio & Sortino Ratio')
+            sharpe_val = calculate_sharpe_ratio(data['Returns'], risk_free_rate)
+            sortino_val = calculate_sortino_ratio(data['Returns'], risk_free_rate)
+            st.write(f"- Sharpe Ratio: {sharpe_val:.4f}")
+            st.write(f"- Sortino Ratio: {sortino_val:.4f}")
+
+            # (15) Information Ratio & Treynor Ratio
+            st.header('📊 Information Ratio & Treynor Ratio')
+            if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
+                info_ratio_val = calculate_information_ratio(data['Returns'], benchmark_data['Returns'])
+                treynor_val = calculate_treynor_ratio(data['Returns'], benchmark_data['Returns'], risk_free_rate)
+                st.write(f"- Information Ratio: {info_ratio_val:.4f}")
+                st.write(f"- Treynor Ratio: {treynor_val:.4f}")
+
+                st.markdown("""
+                - **Information Ratio**: 벤치마크 대비 초과수익을 얼마나 '안정적'으로 내는지  
+                - **Treynor Ratio**: Beta(시스템적 위험) 1만큼 감수할 때 초과수익이 얼마나 되는지
+                """)
+            else:
+                st.warning("벤치마크 데이터가 부족하여 IR/Treynor 계산 불가.")
+
+            # (16) Alpha & Beta
+            st.header('🔎 Alpha & Beta (빈도 선택)')
+            if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
+                alpha_val, beta_val = calculate_alpha_beta(
+                    data['Returns'],
+                    benchmark_data['Returns'],
+                    risk_free_rate,
+                    freq=freq_option
+                )
+                st.write(f"- Alpha({freq_option}, 연율): {alpha_val:.4f}")
+                st.write(f"- Beta({freq_option}): {beta_val:.4f}")
+                st.markdown("""
+                - Beta > 1 : 시장보다 변동성 큼(공격)  
+                - Beta < 1 : 시장보다 변동성 낮음(방어)  
+                - Alpha > 0: 시장 대비 초과수익  
+                - Alpha < 0: 시장 대비 부진
+                """)
+            else:
+                st.warning("벤치마크 데이터가 없어 Alpha·Beta 계산 불가.")
+
+            # (17) Calmar Ratio
+            st.header("🌊 Calmar Ratio")
+            calmar_val = calculate_calmar_ratio(data['Returns'])
+            calmar_text = interpret_calmar_ratio(calmar_val)
+            st.write(calmar_text)
+
+            # (18) 에르고딕 가설
+            st.header('🔎 에르고딕 가설 분석')
+            st.markdown("""
+            **에르고딕 가설**:  
+            - 시간 평균 ≈ 표본 평균이면 과거 통계가 미래에도 유효할 가능성 높음
+            """)
+            cum_ret = data['Cumulative Returns']
+            st.line_chart(cum_ret)
+
+            time_avg = cum_ret.mean()  # 시계열의 단순 평균
+            ensemble_avg = data['Returns'].mean() * len(data)  # 집합 평균 (단순히 mean x sample_count)
+            diff = abs(time_avg - ensemble_avg)
+
+            st.write(f"- 시간 평균 (Time Average): {time_avg:.4f}")
+            st.write(f"- 집합 평균 (Ensemble Average): {ensemble_avg:.4f}")
+            st.write(f"- 차이값: {diff:.4f}")
+
+            if diff < 0.01:
+                st.write("✅ 에르고딕 성질이 **강하게** 성립")
+            elif diff < 0.05:
+                st.write("🟨 에르고딕 성질이 **약하게** 성립")
+            else:
+                st.write("❌ 에르고딕 성질이 **성립하지 않음**")
+
+            # (19) 종합 결과
+            st.header('🔔 종합 결과 분석')
+            st.write(f"**최종 포트폴리오 가치**: ${final_value:,.2f}")
+            st.write(f"**총 수익률**: {total_return:.2f}%")
+            st.write(f"**MDD**: {mdd_value*100:.2f}%")
+            st.write(f"**Sharpe Ratio**: {sharpe_val:.4f}")
+            st.write(f"**Sortino Ratio**: {sortino_val:.4f}")
+            if not benchmark_data.empty and 'Returns' in benchmark_data.columns:
+                st.write(f"**Information Ratio**: {info_ratio_val:.4f}")
+                st.write(f"**Treynor Ratio**: {treynor_val:.4f}")
+                st.write(f"**Alpha({freq_option})**: {alpha_val:.4f}")
+                st.write(f"**Beta({freq_option})**: {beta_val:.4f}")
+            st.write(f"**Calmar Ratio**: {calmar_val:.4f}")
+
+            # (20) 🌟 투자 추천 (연역적 로직 + 확률적 예측)
+            st.subheader('🌟 투자 의사결정 추천')
+            # 간단한 예시 로직: posterior_mean vs risk_free, MDD, Sharpe
+            # (실무에서는 훨씬 정교한 조건을 넣어야 함)
+            if posterior_mean > risk_free_rate:
+                if abs(mdd_value) < 0.2 and sharpe_val > 1.0:
+                    st.write("✅ **매수** 추천: 사후 평균이 높고, MDD와 Sharpe Ratio가 괜찮은 편입니다.")
+                    st.write(" - 무위험 수익률을 상회하는 기대수익 + 안정적인 변동성 감안.")
+                else:
+                    st.write("🔄 **유지/추가매수 신중 검토**: 수익률 기대는 높지만, 변동성/리스크도 함께 체크 필요.")
+            else:
+                if sharpe_val < 0.5 or abs(mdd_value) > 0.2:
+                    st.write("❌ **매도** 권장: 기대수익 낮고 변동성(낙폭) 위험도 큼.")
+                else:
+                    st.write("🔍 **관망**: 기대수익 낮으나, Sharpe Ratio 등이 보통 수준. 시장상황을 좀 더 지켜보세요.")
+
+            # (21) 종합 결과
+            st.markdown("---")
+            st.success("💡 분석 완료! 위 지표와 해석을 종합해 최종 투자 결정을 내리시길 바랍니다.")
