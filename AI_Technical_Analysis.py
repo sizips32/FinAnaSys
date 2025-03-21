@@ -360,6 +360,9 @@ def get_yahoo_symbol(symbol, market_type):
     """Yahoo Finance 심볼로 변환"""
     if market_type == "KRX":
         try:
+            # 종목 코드를 6자리로 맞추기
+            symbol = symbol.zfill(6)
+            
             krx = fdr.StockListing('KRX')
             market_column = None
             symbol_column = None
@@ -371,6 +374,8 @@ def get_yahoo_symbol(symbol, market_type):
                 market_column = 'SecuGroup'
             elif '시장구분' in krx.columns:
                 market_column = '시장구분'
+            elif 'MarketId' in krx.columns:
+                market_column = 'MarketId'
                 
             if 'Symbol' in krx.columns:
                 symbol_column = 'Symbol'
@@ -379,14 +384,30 @@ def get_yahoo_symbol(symbol, market_type):
             elif '종목코드' in krx.columns:
                 symbol_column = '종목코드'
                 
-            if market_column and symbol_column:
-                stock_info = krx[krx[symbol_column] == symbol]
-                if not stock_info.empty:
-                    market = stock_info[market_column].iloc[0]
-                    if any(kosdaq in str(market).upper() for kosdaq in ['KOSDAQ', 'KOSDAQ', '코스닥']):
-                        return f"{symbol}.KQ"
+            if not market_column or not symbol_column:
+                st.warning("시장 구분 정보를 찾을 수 없습니다. KOSPI로 가정합니다.")
+                return f"{symbol}.KS"
+                
+            stock_info = krx[krx[symbol_column] == symbol]
+            if stock_info.empty:
+                st.warning(f"{symbol} 종목을 KRX 상장 종목 목록에서 찾을 수 없습니다.")
+                return f"{symbol}.KS"
+                
+            market = str(stock_info[market_column].iloc[0]).upper()
             
-            return f"{symbol}.KS"  # 기본값으로 KOSPI 처리
+            # KOSDAQ 여부 확인
+            kosdaq_keywords = ['KOSDAQ', 'KOSDAQ', '코스닥', 'KQ', 'KSQ']
+            if any(keyword in market for keyword in kosdaq_keywords):
+                return f"{symbol}.KQ"
+                
+            # KOSPI 여부 확인
+            kospi_keywords = ['KOSPI', 'KOSPI', '코스피', 'KS', 'KSE']
+            if any(keyword in market for keyword in kospi_keywords):
+                return f"{symbol}.KS"
+                
+            # 기본값으로 KOSPI 처리
+            st.warning(f"시장 구분이 명확하지 않습니다: {market}. KOSPI로 가정합니다.")
+            return f"{symbol}.KS"
             
         except Exception as e:
             st.warning(f"시장 구분 확인 중 오류 발생: {str(e)}")
@@ -453,109 +474,84 @@ def get_financial_metrics(symbol):
             yahoo_symbol = get_yahoo_symbol(symbol, market_type)
             ticker = yf.Ticker(yahoo_symbol)
             
-            # 먼저 info 데이터 가져오기 시도
+            # 기본 정보 가져오기
+            info = {}
             try:
                 info = ticker.info
                 if not info:
-                    raise ValueError("Yahoo Finance info 데이터가 비어있습니다.")
+                    st.warning("Yahoo Finance 기본 정보를 가져올 수 없습니다.")
             except Exception as info_error:
                 st.warning(f"기본 정보 조회 실패: {str(info_error)}")
-                info = {}
             
-            # 재무제표 데이터 가져오기 시도
+            # 재무제표 데이터 가져오기
+            financials = pd.DataFrame()
+            balance_sheet = pd.DataFrame()
+            
             try:
                 # 최근 4분기 재무제표 데이터 가져오기
                 financials = ticker.quarterly_financials
+                if financials.empty:
+                    financials = ticker.financials
+                
                 balance_sheet = ticker.quarterly_balance_sheet
+                if balance_sheet.empty:
+                    balance_sheet = ticker.balance_sheet
                 
-                if not financials.empty:
-                    # 당기순이익 가져오기
-                    net_income = None
-                    try:
-                        if 'Net Income' in financials.index:
-                            net_income = financials.loc['Net Income'].iloc[0]
-                        elif 'Net Income Common Stockholders' in financials.index:
-                            net_income = financials.loc['Net Income Common Stockholders'].iloc[0]
-                    except Exception as e:
-                        st.warning(f"당기순이익 데이터 조회 실패: {str(e)}")
-                
-                if not balance_sheet.empty:
-                    # 자기자본 가져오기
-                    total_equity = None
-                    try:
-                        if 'Total Stockholder Equity' in balance_sheet.index:
-                            total_equity = balance_sheet.loc['Total Stockholder Equity'].iloc[0]
-                        elif 'Stockholders Equity' in balance_sheet.index:
-                            total_equity = balance_sheet.loc['Stockholders Equity'].iloc[0]
-                    except Exception as e:
-                        st.warning(f"자기자본 데이터 조회 실패: {str(e)}")
-                
+                if financials.empty and balance_sheet.empty:
+                    st.warning("재무제표 데이터를 가져올 수 없습니다.")
             except Exception as fin_error:
                 st.warning(f"재무제표 데이터 조회 실패: {str(fin_error)}")
-                financials = pd.DataFrame()
-                balance_sheet = pd.DataFrame()
             
             # 기본 지표 계산
-            per = info.get('forwardPE', None)
-            pbr = info.get('priceToBook', None)
-            eps = info.get('trailingEPS', None)
-            bps = None  # Yahoo Finance에서는 직접 제공하지 않음
-            if eps is not None and pbr is not None and per is not None:
-                bps = eps * pbr / per
-            dividend_yield = info.get('dividendYield', None)
-            if dividend_yield:
-                dividend_yield = dividend_yield * 100  # 백분율로 변환
+            metrics = {
+                'per': info.get('forwardPE', None),
+                'pbr': info.get('priceToBook', None),
+                'eps': info.get('trailingEPS', None),
+                'bps': None,  # 직접 계산 필요
+                'dividend_yield': info.get('dividendYield', 0) * 100 if info.get('dividendYield') else None,
+                'market_cap': info.get('marketCap', market_cap),
+                'current_price': info.get('regularMarketPrice', None),
+                'avg_volume': info.get('averageVolume', None)
+            }
+            
+            # BPS 계산 (EPS와 PBR이 있는 경우)
+            if metrics['eps'] and metrics['pbr'] and metrics['per']:
+                metrics['bps'] = metrics['eps'] * metrics['pbr'] / metrics['per']
+            
+            # 최근 1년간의 주가 데이터
+            try:
+                end_date = datetime.now()
+                start_date = end_date - timedelta(days=365)
+                stock_data = fdr.DataReader(symbol, start_date, end_date)
                 
-            # 시가총액이 없는 경우 Yahoo Finance에서 가져오기
-            if market_cap is None:
-                market_cap = info.get('marketCap', None)
+                if not stock_data.empty:
+                    metrics['current_price'] = stock_data['Close'].iloc[-1]
+                    metrics['avg_volume'] = stock_data['Volume'].mean()
+            except Exception as price_error:
+                st.warning(f"주가 데이터 조회 실패: {str(price_error)}")
+            
+            return {
+                'market_type': market_type,
+                'sector': sector,
+                'industry': industry,
+                'marketCap': metrics['market_cap'],
+                'currentPrice': metrics['current_price'],
+                'avgVolume': metrics['avg_volume'],
+                'per': metrics['per'],
+                'pbr': metrics['pbr'],
+                'eps': metrics['eps'],
+                'bps': metrics['bps'],
+                'dividendYield': metrics['dividend_yield'],
+                'dates': {
+                    'financial': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
+                    'balance': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
+                    'cashflow': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None
+                }
+            }
                 
         except Exception as e:
             st.warning(f"Yahoo Finance 데이터 가져오기 실패: {str(e)}")
-            per = None
-            pbr = None
-            eps = None
-            bps = None
-            dividend_yield = None
-        
-        # 최근 1년간의 주가 데이터
-        try:
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=365)
-            stock_data = fdr.DataReader(symbol, start_date, end_date)
-            
-            if stock_data.empty:
-                st.warning("주가 데이터를 가져올 수 없습니다.")
-                current_price = None
-                avg_volume = None
-            else:
-                current_price = stock_data['Close'].iloc[-1]
-                avg_volume = stock_data['Volume'].mean()
-        except Exception as price_error:
-            st.warning(f"주가 데이터 조회 실패: {str(price_error)}")
-            current_price = None
-            avg_volume = None
-        
-        metrics = {
-            'market_type': market_type,
-            'sector': sector,
-            'industry': industry,
-            'marketCap': market_cap,
-            'currentPrice': current_price,
-            'avgVolume': avg_volume,
-            'per': per,
-            'pbr': pbr,
-            'eps': eps,
-            'bps': bps,
-            'dividendYield': dividend_yield,
-            'dates': {
-                'financial': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
-                'balance': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
-                'cashflow': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None
-            }
-        }
-        
-        return metrics
+            return None
         
     except Exception as e:
         st.warning(f"재무 지표 수집 중 오류 발생: {str(e)}")
