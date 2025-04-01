@@ -2209,11 +2209,15 @@ class BacktestSystem:
 # OpenAI API 설정
 from openai import OpenAI
 
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", None)
-if OPENAI_API_KEY:
-    client = OpenAI(api_key=OPENAI_API_KEY)
-else:
-    st.warning("OpenAI API 키가 설정되지 않았습니다. 모델 성능 상세 분석이 제한됩니다.")
+try:
+    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", None)
+    if OPENAI_API_KEY:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+    else:
+        st.warning("OpenAI API 키가 설정되지 않았습니다. 기본 분석 기능만 제공됩니다.")
+except Exception as e:
+    st.warning("OpenAI API 키 설정에 문제가 있습니다. 기본 분석 기능만 제공됩니다.")
+    OPENAI_API_KEY = None
 
 def format_metrics(metrics: Dict[str, Any]) -> Dict[str, str]:
     """성능 지표를 보기 좋게 포맷팅합니다."""
@@ -2231,9 +2235,47 @@ def format_metrics(metrics: Dict[str, Any]) -> Dict[str, str]:
     return formatted
 
 def analyze_model_performance(metrics: Dict[str, Any]) -> str:
-    """GPT-4를 사용하여 모델 성능을 분석하고 설명을 생성합니다."""
+    """모델 성능을 분석하고 설명을 생성합니다."""
     if not OPENAI_API_KEY:
-        return "API 키가 설정되지 않아 상세 분석을 수행할 수 없습니다."
+        # API 키가 없을 때의 기본 분석 로직
+        formatted_metrics = format_metrics(metrics)
+        analysis = []
+        
+        # 기본적인 성능 분석
+        if 'Accuracy' in metrics:
+            accuracy = float(formatted_metrics['Accuracy'].strip('%'))
+            if accuracy > 70:
+                analysis.append("모델의 정확도가 매우 높습니다.")
+            elif accuracy > 60:
+                analysis.append("모델의 정확도가 양호한 수준입니다.")
+            else:
+                analysis.append("모델의 정확도가 개선이 필요한 수준입니다.")
+        
+        if 'Sharpe_Ratio' in metrics:
+            sharpe = float(formatted_metrics['Sharpe_Ratio'])
+            if sharpe > 1:
+                analysis.append("리스크 대비 수익률이 우수합니다.")
+            elif sharpe > 0:
+                analysis.append("리스크 대비 수익률이 양호합니다.")
+            else:
+                analysis.append("리스크 대비 수익률이 개선이 필요합니다.")
+        
+        if 'Win_Rate' in metrics:
+            win_rate = float(formatted_metrics['Win_Rate'].strip('%'))
+            if win_rate > 60:
+                analysis.append("승률이 매우 높은 수준입니다.")
+            elif win_rate > 50:
+                analysis.append("승률이 양호한 수준입니다.")
+            else:
+                analysis.append("승률이 개선이 필요합니다.")
+        
+        # 투자자 주의사항
+        analysis.append("\n투자 시 주의사항:")
+        analysis.append("- 과거 성과가 미래 수익을 보장하지 않습니다.")
+        analysis.append("- 분산 투자를 통한 리스크 관리가 중요합니다.")
+        analysis.append("- 정기적인 포트폴리오 리밸런싱을 고려하세요.")
+        
+        return "\n".join(analysis)
     
     try:
         # 메트릭스를 포맷팅
@@ -2255,7 +2297,7 @@ def analyze_model_performance(metrics: Dict[str, Any]) -> str:
         분석은 전문적이면서도 이해하기 쉽게 작성해주세요.
         """
         
-        # GPT-4 API 호출 (새로운 방식)
+        # GPT-4 API 호출
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -2347,3 +2389,4 @@ if st.sidebar.button("분석 시작"):
                 st.error(f"분석 중 오류 발생: {str(e)}")
     else:
         st.error("데이터를 불러오는데 실패했습니다. 티커 심볼을 확인해주세요.")
+
