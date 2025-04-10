@@ -2209,15 +2209,37 @@ class BacktestSystem:
 # OpenAI API 설정
 from openai import OpenAI
 
-try:
-    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", None)
-    if OPENAI_API_KEY:
-        client = OpenAI(api_key=OPENAI_API_KEY)
-    else:
-        st.warning("OpenAI API 키가 설정되지 않았습니다. 기본 분석 기능만 제공됩니다.")
-except Exception as e:
-    st.warning("OpenAI API 키 설정에 문제가 있습니다. 기본 분석 기능만 제공됩니다.")
-    OPENAI_API_KEY = None
+def initialize_openai():
+    """OpenAI API 초기화 및 설정을 처리합니다."""
+    try:
+        api_key = st.secrets.get("OPENAI_API_KEY", None)
+        if not api_key or api_key.strip() == "":
+            st.warning("""
+            OpenAI API 키가 설정되지 않았습니다. 다음 단계를 따라 설정해주세요:
+            1. '.streamlit/secrets.toml' 파일을 생성
+            2. 파일에 'OPENAI_API_KEY = "your-api-key"' 추가
+            3. 실제 API 키로 교체
+            
+            현재는 기본 분석 기능만 제공됩니다.
+            """)
+            return None, None
+        
+        model = st.secrets.get("DEFAULT_MODEL", "gpt-4o-mini")
+        client = OpenAI(api_key=api_key)
+        return client, model
+        
+    except Exception as e:
+        st.warning(f"""
+        OpenAI API 설정 중 문제가 발생했습니다:
+        - 에러: {str(e)}
+        - '.streamlit/secrets.toml' 파일이 올바르게 설정되어 있는지 확인해주세요.
+        
+        현재는 기본 분석 기능만 제공됩니다.
+        """)
+        return None, None
+
+# OpenAI 클라이언트 초기화
+client, model = initialize_openai()
 
 def format_metrics(metrics: Dict[str, Any]) -> Dict[str, str]:
     """성능 지표를 보기 좋게 포맷팅합니다."""
@@ -2236,7 +2258,7 @@ def format_metrics(metrics: Dict[str, Any]) -> Dict[str, str]:
 
 def analyze_model_performance(metrics: Dict[str, Any]) -> str:
     """모델 성능을 분석하고 설명을 생성합니다."""
-    if not OPENAI_API_KEY:
+    if not client or not model:
         # API 키가 없을 때의 기본 분석 로직
         formatted_metrics = format_metrics(metrics)
         analysis = []
@@ -2297,21 +2319,25 @@ def analyze_model_performance(metrics: Dict[str, Any]) -> str:
         분석은 전문적이면서도 이해하기 쉽게 작성해주세요.
         """
         
-        # GPT-4 API 호출
+        # GPT API 호출
+        max_tokens = st.secrets.get("MAX_TOKENS", 1000)
+        temperature = st.secrets.get("TEMPERATURE", 0.7)
+        
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=model,
             messages=[
                 {"role": "system", "content": "당신은 금융 머신러닝 전문가입니다."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
-            max_tokens=1000
+            temperature=temperature,
+            max_tokens=max_tokens
         )
         
         return response.choices[0].message.content
         
     except Exception as e:
-        return f"모델 성능 분석 중 오류가 발생했습니다: {str(e)}"
+        st.error(f"모델 성능 분석 중 오류가 발생했습니다: {str(e)}")
+        return "모델 성능 분석을 수행할 수 없습니다. 기본 지표를 확인해주세요."
 
 if st.sidebar.button("분석 시작"):
     stock_data = get_stock_data(ticker, start_date, end_date)

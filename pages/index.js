@@ -57,7 +57,7 @@ export default function Home() {
   return (
     <div>
       <Head>
-        <title>Financial Analysis Dashboard</title>
+        <title>🧠 Financial Analysis Dashboard</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet" />
       </Head>
@@ -345,14 +345,14 @@ export default function Home() {
       `}</style>
 
       <header className="header">
-        <h1>Financial Analysis Dashboard</h1>
+        <h1>📊Financial Analysis Dashboard</h1>
         <p>고급 금융 분석 도구를 활용한 데이터 기반 의사결정 시스템</p>
       </header>
 
       <div className="container">
         <div className="featured-banner">
           <div className="banner-title-group">
-            <h2 className="banner-title">워드 클라우드 분석</h2>
+            <h2 className="banner-title">🔍 워드 클라우드 분석</h2>
             <button 
               className="banner-button" 
               onClick={async () => {
@@ -398,7 +398,7 @@ export default function Home() {
 
         <div className="analysis-grid">
           <div className="analysis-card">
-            <h2>머신러닝 분석</h2>
+            <h2>🤖 머신러닝 분석</h2>
             <div className="analysis-description">
               머신러닝 기반의 고급 분석을 제공합니다.
               <div className="analysis-details">
@@ -417,7 +417,7 @@ export default function Home() {
           </div>
 
           <div className="analysis-card">
-            <h2>배당 분석</h2>
+            <h2>💰 배당 분석</h2>
             <div className="analysis-description">
               기업의 배당 정책과 수익률을 분석합니다.
               <div className="analysis-details">
@@ -436,7 +436,7 @@ export default function Home() {
           </div>
 
           <div className="analysis-card">
-            <h2>포트폴리오 최적화</h2>
+            <h2>📈 포트폴리오 최적화</h2>
             <div className="analysis-description">
               최적의 자산 배분 분석을 수행합니다.
               <div className="analysis-details">
@@ -455,7 +455,7 @@ export default function Home() {
           </div>
 
           <div className="analysis-card">
-            <h2>퀀텀 분석</h2>
+            <h2>⚛️ 퀀텀 분석</h2>
             <div className="analysis-description">
               양자역학 기반의 가격 예측 모델을 제공합니다.
               <div className="analysis-details">
@@ -474,7 +474,7 @@ export default function Home() {
           </div>
 
           <div className="analysis-card">
-            <h2>변동성 분석</h2>
+            <h2>📉 변동성 분석</h2>
             <div className="analysis-description">
               주가의 변동성과 리스크를 분석합니다.
               <div className="analysis-details">
@@ -493,7 +493,7 @@ export default function Home() {
           </div>
 
           <div className="analysis-card">
-            <h2>재무-기술적 분석</h2>
+            <h2>📊 재무-기술적 분석</h2>
             <div className="analysis-description">
               AI 기반의 재무-기술적 분석을 제공합니다
               <div className="analysis-details">

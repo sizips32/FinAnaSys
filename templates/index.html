@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Financial Analysis Dashboard</title>
+    
+    <!-- 파비콘 설정 -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicon/site.webmanifest">
+    <link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#2c3e50">
+    <meta name="msapplication-TileColor" content="#2c3e50">
+    <meta name="theme-color" content="#ffffff">
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -146,15 +156,15 @@
 </head>
 <body>
     <header class="header">
-        <h1>Financial Analysis Dashboard</h1>
-        <p>종합 금융 분석 시스템</p>
+        <h1>📊 Financial Analysis Dashboard</h1>
+        <p>💹 종합 금융 분석 시스템</p>
     </header>
 
     <div class="container">
         <div class="analysis-grid">
             <!-- Word Cloud 분석 카드를 맨 앞으로 이동 -->
             <div class="analysis-card">
-                <h2>워드 클라우드 분석</h2>
+                <h2>☁️ 워드 클라우드 분석</h2>
                 <div class="analysis-description">
                     텍스트 데이터를 시각적으로 분석합니다.
                     <div class="analysis-details">
@@ -169,7 +179,7 @@
             
             <!-- 기존 분석 카드들 -->
             <div class="analysis-card">
-                <h2>배당 분석</h2>
+                <h2>💰 배당 분석</h2>
                 <div class="analysis-description">
                     기업의 배당 정책과 수익률을 분석합니다.
                     <div class="analysis-details">
@@ -183,7 +193,7 @@
             </div>
 
             <div class="analysis-card">
-                <h2>포트폴리오 최적화</h2>
+                <h2>📊 포트폴리오 최적화</h2>
                 <div class="analysis-description">
                     최적의 자산 배분 분석을 수행합니다.
                     <div class="analysis-details">
@@ -197,7 +207,7 @@
             </div>
 
             <div class="analysis-card">
-                <h2>퀀텀 분석</h2>
+                <h2>⚛️ 퀀텀 분석</h2>
                 <div class="analysis-description">
                     양자역학 기반의 가격 예측 모델을 제공합니다.
                     <div class="analysis-details">
@@ -211,7 +221,7 @@
             </div>
 
             <div class="analysis-card">
-                <h2>변동성 분석</h2>
+                <h2>📈 변동성 분석</h2>
                 <div class="analysis-description">
                     주가의 변동성과 리스크를 분석합니다.
                     <div class="analysis-details">
@@ -225,7 +235,7 @@
             </div>
 
             <div class="analysis-card">
-                <h2>재무-기술적 분석</h2>
+                <h2>📐 재무-기술적 분석</h2>
                 <div class="analysis-description">
                     AI 기반의 재무-기술적 분석을 제공합니다
                     <div class="analysis-details">
@@ -252,7 +262,7 @@
     <script>
         function startAnalysis(type) {
             const outputArea = document.getElementById(`${type}-output`);
-            outputArea.textContent = '분석을 시작합니다...';
+            outputArea.textContent = '⌛ 분석을 시작합니다...';
             
             fetch(`/run/${type}`, {
                 method: 'POST'
@@ -260,15 +270,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    outputArea.textContent = '분석이 시작되었습니다.';
+                    outputArea.textContent = '✅ 분석이 시작되었습니다.';
                     // 새 탭에서 열기
                     window.open(data.url, '_blank');
                 } else {
-                    outputArea.textContent = `오류: ${data.error}`;
+                    outputArea.textContent = `❌ 오류: ${data.error}`;
                 }
             })
             .catch(error => {
-                outputArea.textContent = '분석 실행 중 오류가 발생했습니다.';
+                outputArea.textContent = '❌ 분석 실행 중 오류가 발생했습니다.';
             });
         }
 
@@ -293,7 +303,7 @@
             const file = fileInput.files[0];
             
             if (!file) {
-                alert('파일을 선택해주세요.');
+                alert('⚠️ 파일을 선택해주세요.');
                 return;
             }
 
@@ -301,7 +311,7 @@
             formData.append('file', file);
 
             const outputArea = document.getElementById('wordcloud-output');
-            outputArea.innerHTML = '<div class="loading">분석 중입니다...</div>';
+            outputArea.innerHTML = '<div class="loading">⌛ 분석 중입니다...</div>';
 
             fetch('/analyze', {
                 method: 'POST',
@@ -320,7 +330,7 @@
                     `;
 
                     // 상위 단어 목록 표시
-                    wordsContainer.innerHTML = '<h3>주요 단어</h3>';
+                    wordsContainer.innerHTML = '<h3>📊 주요 단어</h3>';
                     const wordList = document.createElement('div');
                     wordList.className = 'word-list';
                     
@@ -328,7 +338,7 @@
                         const wordItem = document.createElement('div');
                         wordItem.className = 'word-item';
                         wordItem.innerHTML = `
-                            <span class="word">${word}</span>
+                            <span class="word">🔤 ${word}</span>
                             <span class="count">${count}</span>
                         `;
                         wordList.appendChild(wordItem);
@@ -338,11 +348,11 @@
                     resultDiv.style.display = 'block';
                     outputArea.querySelector('.loading')?.remove();
                 } else {
-                    outputArea.innerHTML = `<div class="error">오류: ${data.error}</div>`;
+                    outputArea.innerHTML = `<div class="error">❌ 오류: ${data.error}</div>`;
                 }
             })
             .catch(error => {
-                outputArea.innerHTML = '<div class="error">분석 중 오류가 발생했습니다.</div>';
+                outputArea.innerHTML = '<div class="error">❌ 분석 중 오류가 발생했습니다.</div>';
                 console.error('Error:', error);
             });
         }

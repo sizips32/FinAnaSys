@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <rect width="512" height="512" fill="#2c3e50"/>
+    <g transform="translate(64, 64) scale(0.75)">
+        <!-- 차트 라인 -->
+        <path d="M100,400 L200,300 L300,350 L400,150" 
+              stroke="#3498db" 
+              stroke-width="24" 
+              fill="none" 
+              stroke-linecap="round"/>
+        
+        <!-- 돋보기 -->
+        <circle cx="350" cy="200" r="80" 
+                stroke="#ffffff" 
+                stroke-width="24" 
+                fill="none"/>
+        <line x1="400" y1="280" x2="450" y2="330" 
+              stroke="#ffffff" 
+              stroke-width="24" 
+              stroke-linecap="round"/>
+        
+        <!-- $ 기호 -->
+        <text x="150" y="250" 
+              font-family="Arial" 
+              font-size="120" 
+              fill="#ffffff" 
+              font-weight="bold">$</text>
+    </g>
+</svg> 
