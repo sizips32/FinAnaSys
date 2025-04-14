@@ -5,11 +5,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   
-  // 앱 아이콘 설정
   images: {
-    favicon: '/icon.svg',
-    icon: '/icon.svg',
-    apple: '/icon.svg'
+    domains: [], // 외부 이미지 도메인이 필요한 경우 여기에 추가
+    remotePatterns: [] // 필요한 경우 원격 이미지 패턴 설정
   }
 }
 
