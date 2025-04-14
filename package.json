@@ -1,0 +1,26 @@
+{
+  "name": "finalsys",
+  "version": "1.0.0",
+  "description": "Financial Analysis System",
+  "main": "start.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && pip install --upgrade pip && pip install -r requirements.txt",
+    "start": "next start -p 5050",
+    "vercel-build": "echo 'Build step completed'",
+    "postinstall": "pip install --upgrade pip && pip install -r requirements.txt"
+  },
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "next": "^13.5.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "python": "3.9"
+  },
+  "devDependencies": {
+    "eslint-plugin-react": "^7.37.4"
+  }
+}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="128" cy="128" r="120" fill="#FFC0CB" />
+  
+  <!-- 뇌의 주요 부분 -->
+  <path d="M128 60 
+           C160 60, 190 90, 190 128
+           C190 150, 180 168, 160 180
+           C155 183, 150 190, 150 195
+           L150 200 L106 200
+           L106 195
+           C106 190, 101 183, 96 180
+           C76 168, 66 150, 66 128
+           C66 90, 96 60, 128 60Z" 
+        fill="#FFE5E5" stroke="#FF9AAA" stroke-width="4"/>
+  
+  <!-- 뇌의 주름 패턴 -->
+  <path d="M85 120 Q128 150 171 120" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  <path d="M85 140 Q128 170 171 140" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  <path d="M85 100 Q128 130 171 100" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  
+  <!-- 좌측 주름 -->
+  <path d="M85 90 Q95 100 85 110" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  <path d="M75 120 Q85 130 75 140" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  
+  <!-- 우측 주름 -->
+  <path d="M171 90 Q161 100 171 110" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  <path d="M181 120 Q171 130 181 140" stroke="#FF9AAA" stroke-width="6" fill="none"/>
+  
+  <!-- 하이라이트 -->
+  <circle cx="100" cy="90" r="8" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="90" cy="100" r="4" fill="#FFFFFF" opacity="0.4"/>
+</svg> 

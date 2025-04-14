@@ -1,0 +1,16 @@
+{
+  "name": "Finance Analysis System",
+  "short_name": "FinAnaSys",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#FFC0CB",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+} 

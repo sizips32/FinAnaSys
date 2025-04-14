@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analysis Dashboard</title>
+    
+    <!-- 파비콘 설정 -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicon/site.webmanifest">
+    <link rel="mask-icon" href="/static/favicon/safari-pinned-tab.svg" color="#2c3e50">
+    <meta name="msapplication-TileColor" content="#2c3e50">
+    <meta name="theme-color" content="#ffffff">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --background-color: #f5f6fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--background-color);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .analysis-card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .code-input {
+            width: 100%;
+            height: 150px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            resize: vertical;
+        }
+
+        .run-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        .run-button:hover {
+            background-color: #2980b9;
+        }
+
+        .output-area {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        .analysis-details {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+            padding-left: 10px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .analysis-description {
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error {
+            color: #e74c3c;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #wordcloud-result {
+            margin-top: 20px;
+        }
+
+        .word-list {
+            margin-top: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .word-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+    <!-- jQuery 추가 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <h1>📊 Financial Analysis Dashboard</h1>
+        <p>💹 종합 금융 분석 시스템</p>
+    </header>
+
+    <div class="container">
+        <div class="analysis-grid">
+            <!-- Word Cloud 분석 카드를 맨 앞으로 이동 -->
+            <div class="analysis-card">
+                <h2>☁️ 워드 클라우드 분석</h2>
+                <div class="analysis-description">
+                    텍스트 데이터를 시각적으로 분석합니다.
+                    <div class="analysis-details">
+                        • 텍스트 파일 분석<br>
+                        • 주요 키워드 추출<br>
+                        • 단어 빈도 시각화
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('wordcloud')">분석 시작</button>
+                <div id="wordcloud-output" class="output-area"></div>
+            </div>
+            
+            <!-- 기존 분석 카드들 -->
+            <div class="analysis-card">
+                <h2>💰 배당 분석</h2>
+                <div class="analysis-description">
+                    기업의 배당 정책과 수익률을 분석합니다.
+                    <div class="analysis-details">
+                        • 최근 10년 배당금 이력 분석<br>
+                        • 연간 배당률 계산<br>
+                        • 배당 성장률 추세 확인
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('dividend')">분석 시작</button>
+                <div id="dividend-output" class="output-area"></div>
+            </div>
+
+            <div class="analysis-card">
+                <h2>📊 포트폴리오 최적화</h2>
+                <div class="analysis-description">
+                    최적의 자산 배분 분석을 수행합니다.
+                    <div class="analysis-details">
+                        • 최대 샤프 비율 포트폴리오<br>
+                        • 최소 변동성 포트폴리오<br>
+                        • Risk Parity & Black-Litterman  
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('portoptima')">분석 시작</button>
+                <div id="portoptima-output" class="output-area"></div>
+            </div>
+
+            <div class="analysis-card">
+                <h2>⚛️ 퀀텀 분석</h2>
+                <div class="analysis-description">
+                    양자역학 기반의 가격 예측 모델을 제공합니다.
+                    <div class="analysis-details">
+                        • 슈뢰딩거 방정식 기반 분석<br>
+                        • 가격 확률 분포 예측<br>
+                        • 신뢰구간별 가격 범위 제시
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('quantum')">분석 시작</button>
+                <div id="quantum-output" class="output-area"></div>
+            </div>
+
+            <div class="analysis-card">
+                <h2>📈 변동성 분석</h2>
+                <div class="analysis-description">
+                    주가의 변동성과 리스크를 분석합니다.
+                    <div class="analysis-details">
+                        • 베이지안과 에르고딕 변동성 측정<br>
+                        • GARCH 모델 기반 분석<br>
+                        • VaR(Value at Risk) 산출
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('voltrade')">분석 시작</button>
+                <div id="voltrade-output" class="output-area"></div>
+            </div>
+
+            <div class="analysis-card">
+                <h2>📐 재무-기술적 분석</h2>
+                <div class="analysis-description">
+                    AI 기반의 재무-기술적 분석을 제공합니다
+                    <div class="analysis-details">
+                        • 전략 지표 분석<br>
+                        • 추세 패턴 식별<br>
+                        • 매매 신호 제공
+                    </div>
+                </div>
+                <button class="run-button" onclick="startAnalysis('technical')">분석 시작</button>
+                <div id="technical-output" class="output-area"></div>
+            </div>
+        </div>
+        <div id="wordcloud-section" class="mt-4" style="display: none;">
+            <h3>텍스트 분석 결과</h3>
+            <img id="wordcloud-image" class="img-fluid" alt="워드클라우드">
+            <div id="top-words" class="mt-3">
+                <h4>주요 단어</h4>
+                <ul id="word-list" class="list-group">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startAnalysis(type) {
+            const outputArea = document.getElementById(`${type}-output`);
+            outputArea.textContent = '⌛ 분석을 시작합니다...';
+            
+            fetch(`/run/${type}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    outputArea.textContent = '✅ 분석이 시작되었습니다.';
+                    // 새 탭에서 열기
+                    window.open(data.url, '_blank');
+                } else {
+                    outputArea.textContent = `❌ 오류: ${data.error}`;
+                }
+            })
+            .catch(error => {
+                outputArea.textContent = '❌ 분석 실행 중 오류가 발생했습니다.';
+            });
+        }
+
+        function analyzeText(text) {
+            $.ajax({
+                url: '/analyze',
+                method: 'POST',
+                data: { text: text },
+                success: function(response) {
+                    $('#wordcloud-image').attr('src', 'data:image/png;base64,' + response.wordcloud);
+                    $('#word-list').empty();
+                    Object.entries(response.top_words).forEach(([word, count]) => {
+                        $('#word-list').append(`<li class="list-group-item">${word}: ${count}</li>`);
+                    });
+                    $('#wordcloud-section').show();
+                }
+            });
+        }
+
+        function analyzeWordCloud() {
+            const fileInput = document.getElementById('textFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('⚠️ 파일을 선택해주세요.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const outputArea = document.getElementById('wordcloud-output');
+            outputArea.innerHTML = '<div class="loading">⌛ 분석 중입니다...</div>';
+
+            fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const resultDiv = document.getElementById('wordcloud-result');
+                    const imageContainer = document.getElementById('wordcloud-image-container');
+                    const wordsContainer = document.getElementById('wordcloud-words-container');
+
+                    // 워드클라우드 이미지 표시
+                    imageContainer.innerHTML = `
+                        <img src="data:image/png;base64,${data.wordcloud}" alt="Word Cloud" style="max-width: 100%;">
+                    `;
+
+                    // 상위 단어 목록 표시
+                    wordsContainer.innerHTML = '<h3>📊 주요 단어</h3>';
+                    const wordList = document.createElement('div');
+                    wordList.className = 'word-list';
+                    
+                    Object.entries(data.top_words).forEach(([word, count]) => {
+                        const wordItem = document.createElement('div');
+                        wordItem.className = 'word-item';
+                        wordItem.innerHTML = `
+                            <span class="word">🔤 ${word}</span>
+                            <span class="count">${count}</span>
+                        `;
+                        wordList.appendChild(wordItem);
+                    });
+
+                    wordsContainer.appendChild(wordList);
+                    resultDiv.style.display = 'block';
+                    outputArea.querySelector('.loading')?.remove();
+                } else {
+                    outputArea.innerHTML = `<div class="error">❌ 오류: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                outputArea.innerHTML = '<div class="error">❌ 분석 중 오류가 발생했습니다.</div>';
+                console.error('Error:', error);
+            });
+        }
+
+        // 파일 입력 변경 이벤트 처리
+        document.getElementById('textFileInput').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || '파일 선택';
+            document.querySelector('.file-label').textContent = fileName;
+        });
+    </script>
+</body>
+</html>
