@@ -14,8 +14,8 @@ import os
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
+import time
+import random
 
 st.set_page_config(layout="wide")
 st.title("AI 기반 재무-기술적 분석 시스템")
@@ -209,7 +209,8 @@ def fetch_stock_data(symbol, period):
             if symbol in nasdaq[us_symbol_column].values:
                 company_name = nasdaq[nasdaq[us_symbol_column] == symbol][us_name_column].iloc[0]
             else:
-                company_name = nyse[nyse[us_symbol_column] == symbol][us_name_column].iloc[0]
+                company_name = (nyse[nyse[us_symbol_column] == symbol]
+                              [us_name_column].iloc[0])
 
         if data.empty:
             st.error(f"{symbol}에 대한 데이터를 찾을 수 없습니다.")
@@ -224,7 +225,8 @@ def fetch_stock_data(symbol, period):
 
         # VWAP 계산
         data['VWAP'] = (data['High'] + data['Low'] + data['Close']) / 3
-        data['VWAP'] = (data['VWAP'] * data['Volume']).cumsum() / data['Volume'].cumsum()
+        data['VWAP'] = ((data['VWAP'] * data['Volume']).cumsum() / 
+                        data['Volume'].cumsum())
 
         # 시장 정보와 회사명 추가
         data.attrs['market_type'] = market_type
@@ -417,6 +419,25 @@ def get_yahoo_symbol(symbol, market_type):
 
 def get_financial_metrics(symbol):
     """기업 재무 지표 수집 함수"""
+    MAX_RETRIES = 3  # 최대 재시도 횟수
+    BASE_DELAY = 2   # 기본 대기 시간 (초)
+    
+    def fetch_with_retry(ticker, operation_name, operation_func):
+        """재시도 로직이 포함된 데이터 가져오기 함수"""
+        for attempt in range(MAX_RETRIES):
+            try:
+                return operation_func()
+            except Exception as e:
+                if "429" in str(e):  # Too Many Requests 에러
+                    if attempt < MAX_RETRIES - 1:  # 마지막 시도가 아닌 경우
+                        delay = BASE_DELAY * (2 ** attempt) + random.uniform(0, 1)  # 지수 백오프 + 무작위성
+                        st.warning(f"{operation_name} 데이터 가져오기 재시도 중... ({attempt + 1}/{MAX_RETRIES})")
+                        time.sleep(delay)
+                        continue
+                st.error(f"{operation_name} 데이터 가져오기 실패: {str(e)}")
+                return None
+        return None
+
     try:
         # 기본 정보 가져오기
         krx = fdr.StockListing('KRX')
@@ -471,62 +492,115 @@ def get_financial_metrics(symbol):
 
         # Yahoo Finance에서 재무제표 데이터 가져오기
         try:
-            yahoo_symbol = get_yahoo_symbol(symbol, market_type)
-            ticker = yf.Ticker(yahoo_symbol)
+            ticker = yf.Ticker(symbol)
             
-            # 기본 정보 가져오기
-            info = {}
+            # 재무제표 데이터 가져오기 (재시도 로직 적용)
+            financials = fetch_with_retry(ticker, "손익계산서", lambda: ticker.get_financials())
+            balance_sheet = fetch_with_retry(ticker, "재무상태표", lambda: ticker.get_balance_sheet())
+            info = fetch_with_retry(ticker, "기업 정보", lambda: ticker.info)
+
+            if financials is None and balance_sheet is None and info is None:
+                st.error("Yahoo Finance API에서 데이터를 가져올 수 없습니다. 잠시 후 다시 시도해주세요.")
+                return None
+
+            # 당기순이익 가져오기
+            net_income = None
             try:
-                info = ticker.info
-                if not info:
-                    st.warning("Yahoo Finance 기본 정보를 가져올 수 없습니다.")
-            except Exception as info_error:
-                st.warning(f"기본 정보 조회 실패: {str(info_error)}")
-            
-            # 재무제표 데이터 가져오기
-            financials = pd.DataFrame()
-            balance_sheet = pd.DataFrame()
-            
+                if financials is not None and not financials.empty:
+                    if 'Net Income' in financials.index:
+                        net_income = financials.loc['Net Income'].iloc[0]
+                    elif 'NetIncome' in financials.index:
+                        net_income = financials.loc['NetIncome'].iloc[0]
+            except (KeyError, AttributeError) as e:
+                st.warning(f"당기순이익 데이터 추출 실패: {str(e)}")
+
+            # 자기자본 가져오기
+            total_equity = None
             try:
-                # 최근 4분기 재무제표 데이터 가져오기
-                financials = ticker.quarterly_financials
-                if financials.empty:
-                    financials = ticker.financials
+                if balance_sheet is not None and not balance_sheet.empty:
+                    if 'Total Stockholder Equity' in balance_sheet.index:
+                        total_equity = balance_sheet.loc['Total Stockholder Equity'].iloc[0]
+                    elif 'StockholderEquity' in balance_sheet.index:
+                        total_equity = balance_sheet.loc['StockholderEquity'].iloc[0]
+            except (KeyError, AttributeError) as e:
+                st.warning(f"자기자본 데이터 추출 실패: {str(e)}")
+
+            # ROE 계산 및 시그널 생성
+            if net_income is not None and total_equity is not None and total_equity != 0:
+                roe = (net_income / total_equity) * 100
                 
-                balance_sheet = ticker.quarterly_balance_sheet
-                if balance_sheet.empty:
-                    balance_sheet = ticker.balance_sheet
+                if roe > 15:
+                    roe_signal = 1
+                elif roe > 10:
+                    roe_signal = 0.5
+                elif roe > 5:
+                    roe_signal = 0
+                else:
+                    roe_signal = -1
+            else:
+                roe = None
+                roe_signal = 0
                 
-                if financials.empty and balance_sheet.empty:
-                    st.warning("재무제표 데이터를 가져올 수 없습니다.")
-            except Exception as fin_error:
-                st.warning(f"재무제표 데이터 조회 실패: {str(fin_error)}")
+            # 기타 재무 정보
+            info = ticker.info
             
-            # 기본 지표 계산
-            metrics = {
-                'per': info.get('forwardPE', None),
-                'pbr': info.get('priceToBook', None),
-                'eps': info.get('trailingEPS', None),
+            # PER 분석
+            per = info.get('forwardPE')
+            per_signal = 0
+            if per and per > 0:
+                if per < 10:
+                    per_signal = 1
+                elif per < 20:
+                    per_signal = 0.5
+                elif per < 30:
+                    per_signal = -0.5
+                else:
+                    per_signal = -1
+            
+            # PBR 분석
+            pbr = info.get('priceToBook')
+            pbr_signal = 0
+            if pbr and pbr > 0:
+                if pbr < 1:
+                    pbr_signal = 1
+                elif pbr < 3:
+                    pbr_signal = 0.5
+                elif pbr < 5:
+                    pbr_signal = -0.5
+                else:
+                    pbr_signal = -1
+            
+            # 재무 종합 점수 계산
+            signals = {
+                'per': per,
+                'pbr': pbr,
+                'eps': info.get('last_year_eps', None),
                 'bps': None,  # 직접 계산 필요
-                'dividend_yield': info.get('dividendYield', 0) * 100 if info.get('dividendYield') else None,
-                'market_cap': info.get('marketCap', market_cap),
-                'current_price': info.get('regularMarketPrice', None),
-                'avg_volume': info.get('averageVolume', None)
+                'dividend_yield': info.get('dividend_yield', 0) * 100 if info.get('dividend_yield') else None,
+                'market_cap': info.get('market_cap', market_cap),
+                'current_price': info.get('last_price', None),
+                'avg_volume': info.get('three_month_avg_volume', None)
             }
             
-            # BPS 계산 (EPS와 PBR이 있는 경우)
-            if metrics['eps'] and metrics['pbr'] and metrics['per']:
-                metrics['bps'] = metrics['eps'] * metrics['pbr'] / metrics['per']
+            # BPS 계산 (자기자본/발행주식수)
+            try:
+                if not balance_sheet.empty:
+                    total_equity = balance_sheet.loc['Total Stockholder Equity'].iloc[-1]
+                    shares_outstanding = info.get('shares_outstanding', None)
+                    if total_equity and shares_outstanding:
+                        signals['bps'] = total_equity / shares_outstanding
+            except Exception as bps_error:
+                st.warning(f"BPS 계산 실패: {str(bps_error)}")
             
             # 최근 1년간의 주가 데이터
             try:
                 end_date = datetime.now()
                 start_date = end_date - timedelta(days=365)
-                stock_data = fdr.DataReader(symbol, start_date, end_date)
+                stock_data = ticker.history(period='1y')
                 
                 if not stock_data.empty:
-                    metrics['current_price'] = stock_data['Close'].iloc[-1]
-                    metrics['avg_volume'] = stock_data['Volume'].mean()
+                    signals['current_price'] = stock_data['Close'].iloc[-1]
+                    signals['avg_volume'] = stock_data['Volume'].mean()
             except Exception as price_error:
                 st.warning(f"주가 데이터 조회 실패: {str(price_error)}")
             
@@ -534,14 +608,14 @@ def get_financial_metrics(symbol):
                 'market_type': market_type,
                 'sector': sector,
                 'industry': industry,
-                'marketCap': metrics['market_cap'],
-                'currentPrice': metrics['current_price'],
-                'avgVolume': metrics['avg_volume'],
-                'per': metrics['per'],
-                'pbr': metrics['pbr'],
-                'eps': metrics['eps'],
-                'bps': metrics['bps'],
-                'dividendYield': metrics['dividend_yield'],
+                'marketCap': signals['market_cap'],
+                'currentPrice': signals['current_price'],
+                'avgVolume': signals['avg_volume'],
+                'per': signals['per'],
+                'pbr': signals['pbr'],
+                'eps': signals['eps'],
+                'bps': signals['bps'],
+                'dividendYield': signals['dividend_yield'],
                 'dates': {
                     'financial': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
                     'balance': start_date.strftime('%Y-%m-%d') if 'start_date' in locals() else None,
@@ -955,58 +1029,63 @@ def main():
                     
                     # 5. 재무 분석
                     try:
-                        ticker = fdr.DataReader(symbol, '2023-04-01', '2023-04-30')
+                        ticker = yf.Ticker(symbol)
                         
                         # 재무제표 데이터 가져오기
                         try:
-                            financials = ticker.income_stmt
-                            balance_sheet = ticker.balance_sheet
-                        except Exception as e:
-                            st.warning(f"재무제표 데이터 가져오기 실패: {str(e)}")
-                            financials = pd.DataFrame()
-                            balance_sheet = pd.DataFrame()
-                        
-                        # ROE 계산
-                        roe = None
-                        roe_signal = 0
-                        
-                        if not financials.empty and not balance_sheet.empty:
+                            # 최근 재무제표 데이터 가져오기
+                            financials = ticker.get_financials()
+                            if financials.empty:
+                                st.warning("손익계산서 데이터를 가져올 수 없습니다.")
+                            
+                            balance_sheet = ticker.get_balance_sheet()
+                            if balance_sheet.empty:
+                                st.warning("재무상태표 데이터를 가져올 수 없습니다.")
+
+                            # 당기순이익 가져오기
+                            net_income = None
                             try:
-                                # 당기순이익 가져오기
-                                net_income = None
-                                try:
-                                    net_income = financials.loc[financials.index[0], 'NetIncome']
-                                except (KeyError, AttributeError):
-                                    try:
-                                        net_income = financials.loc[financials.index[0], 'Net Income']
-                                    except (KeyError, AttributeError):
-                                        st.warning("당기순이익 데이터를 찾을 수 없습니다. (NetIncome/Net Income)")
+                                if not financials.empty:
+                                    # 최근 연간 당기순이익 데이터 찾기
+                                    if 'Net Income' in financials.index:
+                                        net_income = financials.loc['Net Income'].iloc[0]
+                                    elif 'NetIncome' in financials.index:
+                                        net_income = financials.loc['NetIncome'].iloc[0]
+                            except (KeyError, AttributeError) as e:
+                                st.warning(f"당기순이익 데이터 추출 실패: {str(e)}")
 
-                                # 자기자본 가져오기
-                                total_equity = None
-                                try:
-                                    total_equity = balance_sheet.loc[balance_sheet.index[0], 'StockholderEquity']
-                                except (KeyError, AttributeError):
-                                    try:
-                                        total_equity = balance_sheet.loc[balance_sheet.index[0], 'Total Stockholder Equity']
-                                    except (KeyError, AttributeError):
-                                        st.warning("자기자본 데이터를 찾을 수 없습니다. (StockholderEquity/Total Stockholder Equity)")
+                            # 자기자본 가져오기
+                            total_equity = None
+                            try:
+                                if not balance_sheet.empty:
+                                    # 최근 자기자본 데이터 찾기
+                                    if 'Total Stockholder Equity' in balance_sheet.index:
+                                        total_equity = balance_sheet.loc['Total Stockholder Equity'].iloc[0]
+                                    elif 'StockholderEquity' in balance_sheet.index:
+                                        total_equity = balance_sheet.loc['StockholderEquity'].iloc[0]
+                            except (KeyError, AttributeError) as e:
+                                st.warning(f"자기자본 데이터 추출 실패: {str(e)}")
 
-                                # ROE 계산 및 시그널 생성
-                                if net_income is not None and total_equity is not None and total_equity != 0:
-                                    roe = (net_income / total_equity) * 100
-                                    
-                                    if roe > 15:
-                                        roe_signal = 1
-                                    elif roe > 10:
-                                        roe_signal = 0.5
-                                    elif roe > 5:
-                                        roe_signal = 0
-                                    else:
-                                        roe_signal = -1
-                                        
-                            except Exception as e:
-                                st.warning(f"ROE 계산 중 오류 발생: {str(e)}")
+                            # ROE 계산 및 시그널 생성
+                            if net_income is not None and total_equity is not None and total_equity != 0:
+                                roe = (net_income / total_equity) * 100
+                                
+                                if roe > 15:
+                                    roe_signal = 1
+                                elif roe > 10:
+                                    roe_signal = 0.5
+                                elif roe > 5:
+                                    roe_signal = 0
+                                else:
+                                    roe_signal = -1
+                            else:
+                                roe = None
+                                roe_signal = 0
+                                
+                        except Exception as fin_error:
+                            st.warning(f"재무제표 데이터 분석 중 오류 발생: {str(fin_error)}")
+                            roe = None
+                            roe_signal = 0
                         
                         # 기타 재무 정보
                         info = ticker.info
